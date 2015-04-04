@@ -266,6 +266,8 @@ class Curve_spreadsheet(QtGui.QWidget):
         
         pm.sets('initialShadingGroup', forceElement=pm_mesh_list)
 
+        pm.select(main_pipe_grp)
+
 
 def show():      
     win = Curve_spreadsheet(parent=maya_main_window())
