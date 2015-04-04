@@ -116,17 +116,18 @@ def worldspace_radius(cv_list, radius, num_points):
 
 
 
-def create_profile_points(radius, num_points):
+def create_profile_points(radius, num_points, rotation_offset=0):
     '''Returns a list of positions (pm.datatypes.Vector) on a circle 
     around the origin, in the xz plane, i.e. y axis as normal'''
     
+    rotation_offset_rad = (math.pi/180) * rotation_offset
     ang_inc = (math.pi*2)/num_points
     
     p_list = []
     
     for i in range(num_points):
-        u = math.cos(ang_inc*i)*radius
-        v = math.sin(ang_inc*i)*radius
+        u = math.cos((ang_inc*i) + rotation_offset_rad)*radius
+        v = math.sin((ang_inc*i) + rotation_offset_rad)*radius
         p_list.append(pm.datatypes.Vector(0, v, u))
      
     return p_list

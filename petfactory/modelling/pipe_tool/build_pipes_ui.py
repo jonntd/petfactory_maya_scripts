@@ -59,10 +59,8 @@ class Curve_spreadsheet(QtGui.QWidget):
 
         # add path
         #add_populate_lineedit(label, parent_layout, callback=None, kwargs={}):
-        self.path_line_edit = simple_widget.add_populate_lineedit(label='Add Path', parent_layout=self.vertical_layout, callback=self.add_path_click, kwargs={})
-        self.fitting_mesh_line_edit = simple_widget.add_populate_lineedit(label='Add Mesh', parent_layout=self.vertical_layout, callback=self.add_fitting_mesh_click, kwargs={})
+        self.path_line_edit = simple_widget.add_populate_lineedit(label='Add Path >', parent_layout=self.vertical_layout, callback=self.add_path_click, kwargs={})
 
-        
         # model
         self.model = QtGui.QStandardItemModel()
         self.model.dataChanged.connect(self.model_changed)
@@ -77,13 +75,25 @@ class Curve_spreadsheet(QtGui.QWidget):
         #v_header = self.table_view.verticalHeader()
         h_header = self.table_view.horizontalHeader()
         h_header.setResizeMode(QtGui.QHeaderView.Stretch)
-        
+
+
         self.pipe_radius_spinbox = simple_widget.add_spinbox(label='Pipe radius', min=.05, default=1, parent_layout=self.vertical_layout, double_spinbox=True)
         self.axis_div_spinbox = simple_widget.add_spinbox(label='Axis Divisions', min=3, default=12, parent_layout=self.vertical_layout)
         self.length_div_spinbox = simple_widget.add_spinbox(label='Length Divisions', min=2, default=5, parent_layout=self.vertical_layout)
         self.radial_div_spinbox = simple_widget.add_spinbox(label='Radial Divisions', min=3, default=10, parent_layout=self.vertical_layout)
-        
- 
+        self.mesh_rotation_offset_spinbox = simple_widget.add_spinbox(label='Mesh rotation offset', min=0, default=0, max=360, parent_layout=self.vertical_layout, double_spinbox=True)
+
+        # mesh fitting group box
+        self.pipe_fitting_groupbox = QtGui.QGroupBox("Pipe fitting")
+        self.vertical_layout.addWidget(self.pipe_fitting_groupbox)
+        pipe_fitting_groupbox_layout = QtGui.QVBoxLayout()
+        self.pipe_fitting_groupbox.setLayout(pipe_fitting_groupbox_layout)
+        self.pipe_fitting_groupbox.setCheckable(True)
+        self.pipe_fitting_groupbox.setChecked(False)
+
+        self.fitting_mesh_line_edit = simple_widget.add_populate_lineedit(label='Add Mesh >', parent_layout=pipe_fitting_groupbox_layout, callback=self.add_fitting_mesh_click, kwargs={})
+
+
         # build button
         self.build_button_horiz_layout = QtGui.QHBoxLayout()
         self.vertical_layout.addLayout(self.build_button_horiz_layout)
@@ -179,15 +189,19 @@ class Curve_spreadsheet(QtGui.QWidget):
         length_divisions = self.length_div_spinbox.value()
         radial_divisions = self.radial_div_spinbox.value()
         
+        use_pipe_fitting_mesh = self.pipe_fitting_groupbox.isChecked()
+        mesh_rotation_offset = self.mesh_rotation_offset_spinbox.value()
+
+
         crv_name = self.path_line_edit.text()
         fitting_mesh_name = self.fitting_mesh_line_edit.text()
         
         if not pet_verify.verify_string(crv_name, pm.nodetypes.NurbsCurve):
-            pm.warning('Must be a Curve')
+            pm.warning('Please specify a curve!')
             return None
         
-        if not pet_verify.verify_string(fitting_mesh_name, pm.nodetypes.Mesh):
-            pm.warning('Must be a mesh')
+        if use_pipe_fitting_mesh and not pet_verify.verify_string(fitting_mesh_name, pm.nodetypes.Mesh):
+            pm.warning('Please specify a mesh!')
             return None
         
         num_rows = self.model.rowCount()
@@ -217,7 +231,7 @@ class Curve_spreadsheet(QtGui.QWidget):
         result_matrix_list = build_pipes.create_round_corner_matrix_list(cv_list, radius_list=corner_radius_list, radial_divisions=radial_divisions, length_divisions=length_divisions)
         
         # create the profile 
-        profile_pos = build_pipes.create_profile_points(radius=pipe_radius, num_points=axis_divisions)
+        profile_pos = build_pipes.create_profile_points(radius=pipe_radius, num_points=axis_divisions, rotation_offset=mesh_rotation_offset)
         
         # get the positions
         pos_list = build_pipes.transform_profile_list(result_matrix_list=result_matrix_list, profile_pos=profile_pos)
@@ -229,19 +243,26 @@ class Curve_spreadsheet(QtGui.QWidget):
         pm.parent(pm_mesh_list, pipe_grp)
         
         # add pipe fitting
-        dup_mesh=None
-        try:
-            dup_mesh = pm.PyNode(fitting_mesh_name)
-        except pm.MayaNodeError:
-            pm.warning('could not find fitting mesh')
-        
-        fitting_list = build_pipes.add_pipe_fitting(result_matrix_list, radius=pipe_radius, mesh=dup_mesh)
-        fitting_grp = pm.group(em=True, name='fitting_grp')
-        pm.parent(fitting_list, fitting_grp)
+        if use_pipe_fitting_mesh:
+            
+            dup_mesh=None
+            try:
+                dup_mesh = pm.PyNode(fitting_mesh_name)
+            except pm.MayaNodeError:
+                pm.warning('could not find fitting mesh')
+            
+            fitting_list = build_pipes.add_pipe_fitting(result_matrix_list, radius=pipe_radius, mesh=dup_mesh)
+            fitting_grp = pm.group(em=True, name='fitting_grp')
+            pm.parent(fitting_list, fitting_grp)
         
         # create the main group
         main_pipe_grp = pm.group(em=True, name='main_pipe_grp')
-        pm.parent(pipe_grp, fitting_grp, main_pipe_grp)
+        
+        if use_pipe_fitting_mesh:
+            pm.parent(pipe_grp, fitting_grp, main_pipe_grp)
+            
+        else:
+            pm.parent(pipe_grp, main_pipe_grp)
         
         pm.sets('initialShadingGroup', forceElement=pm_mesh_list)
 
@@ -251,7 +272,7 @@ def show():
     win.show()
 
 
-
+'''
 
 try:
     win.close()
@@ -261,7 +282,7 @@ except NameError as e:
 win = Curve_spreadsheet(parent=maya_main_window())
 win.move(100, 210)
 win.show()
-
+'''
 
 
 
