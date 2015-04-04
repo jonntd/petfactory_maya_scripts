@@ -136,3 +136,9 @@ def get_nodetype(node):
 
     else:
         return(type(node))
+
+def to_transform(node):
+    if not isinstance(node, pm.nodetypes.Transform):
+        return node.getParent()
+    else:
+        return node
