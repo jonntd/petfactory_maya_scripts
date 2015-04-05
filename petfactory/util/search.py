@@ -1,5 +1,6 @@
 import re
 #import pprint
+import pymel.core as pm
 
 def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name):
     
@@ -29,7 +30,8 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
         else:
             name = node.nodeName()         
 
-        match_obj = regex.match('abcdef_weld_asas')
+        print(name)
+        match_obj = regex.match(name)
         if match_obj:
             match_list.append(node)
 
@@ -42,12 +44,12 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
         pm.warning('No match found!')
     
 
-
-pattern = r'^[\w\d|]*weld[\w\d|]*$'
+'''
+pattern = r'^[\w\d|]*katt[\w\d|]*$'
 nodetype = pm.nodetypes.Mesh
 use_longname = True
 use_parent = True
-set_name = 'weld'
+set_name = 'katt'
 
 
 create_set_from_regex(  pattern=pattern,
@@ -55,4 +57,5 @@ create_set_from_regex(  pattern=pattern,
                         use_longname=use_longname,
                         use_parent=use_parent,
                         set_name=set_name)
+'''
 
