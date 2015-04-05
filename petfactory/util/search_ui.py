@@ -3,6 +3,7 @@ from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
 from functools import partial
 import re
+import pymel.core as pm
 
 import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
@@ -77,6 +78,12 @@ class RegexWidget(QtGui.QWidget):
                                             use_longname=use_longname,
                                             use_parent=use_parent,
                                             set_name=set_name)
+
+def show():
+    win = RegexWidget(parent=maya_main_window())
+    win.show()
+
+
 '''
 try:
     win.close()
