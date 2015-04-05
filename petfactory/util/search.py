@@ -42,11 +42,11 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
         pm.select(deselect=True)
         
         # if we have a set that matches the name, use that
-        mesh_set = pet_verify.to_pynode('{0}_set'.format(set_name))
+        mesh_set = pet_verify.to_pynode(set_name)
         
         # else create a new set
         if mesh_set is None:
-            mesh_set = pm.sets(name='{0}_set'.format(set_name))
+            mesh_set = pm.sets(name=set_name)
         
         mesh_set.addMembers(match_list)
         

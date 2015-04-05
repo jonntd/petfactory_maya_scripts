@@ -56,6 +56,7 @@ def verify_selection(node_type):
         
     if not sel:
         pm.warning('Nothing is selected!')
+        return False
         
     # check if the node is an instance
     if isinstance(sel[0], node_type):

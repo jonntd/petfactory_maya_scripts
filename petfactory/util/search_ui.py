@@ -11,6 +11,8 @@ reload(simple_widget)
 import petfactory.util.search as pet_search
 reload(pet_search)
 
+import petfactory.util.verify as pet_verify
+reload(pet_verify)
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
@@ -24,15 +26,41 @@ class RegexWidget(QtGui.QWidget):
         super(RegexWidget, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         
+        self.active_set = None
+        
+        # layout
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.setContentsMargins(0,0,0,0)
+        self.setLayout(main_layout)
+        
+        
+        self.menu_bar = QtGui.QMenuBar()
+        main_layout.addWidget(self.menu_bar)
+        file_menu = self.menu_bar.addMenu('Sets')
+ 
+        self.set_active_action = QtGui.QAction('Active set (None)', self)
+        self.set_active_action.triggered.connect(self.set_active_set)
+        file_menu.addAction(self.set_active_action)
+        
+        
+        set_action = QtGui.QAction('Remove from Set', self)
+        set_action.triggered.connect(self.remove_from_set)
+        file_menu.addAction(set_action)
+
+        
+        
+        
         # layout
         vertical_layout = QtGui.QVBoxLayout()
-        self.setLayout(vertical_layout)
+        vertical_layout.setContentsMargins(7,7,7,7)
+        main_layout.addLayout(vertical_layout)
+  
         
         self.resize(300,100)
         self.setWindowTitle("Regex set")
         
         self.regex_lineedit = simple_widget.labeled_lineedit(label='Regex', parent_layout=vertical_layout)
-        self.regex_lineedit.setText('^[\w\d|]*xxx[\w\d|]*$')
+        self.regex_lineedit.setText('^.*xxx.*$')
         self.set_name_lineedit = simple_widget.labeled_lineedit(label='Set name', parent_layout=vertical_layout)
         
         self.use_parent_checkbox = simple_widget.labeled_checkbox(label='Use parent', parent_layout=vertical_layout)
@@ -78,11 +106,35 @@ class RegexWidget(QtGui.QWidget):
                                             use_longname=use_longname,
                                             use_parent=use_parent,
                                             set_name=set_name)
+                                            
+    def remove_from_set(self):
+        
+        # check if the active set exists, if not change the menu text and set the active_set to None
+        active_set = pet_verify.to_pynode(self.active_set.nodeName())
+        
+        if active_set is None:
+            self.active_set = None
+            self.set_active_action.setText('Active set (None)')
+            return
+        
+        sel_list = pm.ls(sl=True)
+        
+        try:
+            self.active_set.removeMembers(sel_list)
+            
+        except (AttributeError, RuntimeError) as e:
+            print(e)
+        
+    
+    def set_active_set(self): 
+        if pet_verify.verify_selection(pm.nodetypes.ObjectSet):
+            self.active_set = pm.ls(sl=True)[0]
+            self.set_active_action.setText('Active set ({0})'.format(pm.ls(sl=True)[0].nodeName()))
+        
 
 def show():
     win = RegexWidget(parent=maya_main_window())
     win.show()
-
 
 '''
 try:
