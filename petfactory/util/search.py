@@ -3,6 +3,13 @@ import re
 
 def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name):
     
+    try:
+        regex = re.compile(pattern)
+        
+    except re.error as e:
+        pm.warning(e)
+        return None
+    
     node_list = pm.ls(type=nodetype)
     
     match_list = []
@@ -21,16 +28,18 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
             name = node.longName()
         else:
             name = node.nodeName()         
-        #print(name)
-        
-        match_obj = re.match(pattern, name)
+
+        match_obj = regex.match('abcdef_weld_asas')
         if match_obj:
             match_list.append(node)
 
-    #pprint.pprint(match_list)
-    pm.select(deselect=True)
-    mesh_set = pm.sets(name='{0}_set'.format(set_name))
-    mesh_set.addMembers(match_list)
+ 
+    if len(match_list) > 0:
+        pm.select(deselect=True)
+        mesh_set = pm.sets(name='{0}_set'.format(set_name))
+        mesh_set.addMembers(match_list)
+    else:
+        pm.warning('No match found!')
     
 
 
