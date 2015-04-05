@@ -2,6 +2,8 @@ import re
 #import pprint
 import pymel.core as pm
 
+import petfactory.util.verify as pet_verify
+
 def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name):
     
     try:
@@ -30,7 +32,7 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
         else:
             name = node.nodeName()         
 
-        print(name)
+        #print(name)
         match_obj = regex.match(name)
         if match_obj:
             match_list.append(node)
@@ -38,18 +40,26 @@ def create_set_from_regex(pattern, nodetype, use_longname, use_parent, set_name)
  
     if len(match_list) > 0:
         pm.select(deselect=True)
-        mesh_set = pm.sets(name='{0}_set'.format(set_name))
+        
+        # if we have a set that matches the name, use that
+        mesh_set = pet_verify.to_pynode('{0}_set'.format(set_name))
+        
+        # else create a new set
+        if mesh_set is None:
+            mesh_set = pm.sets(name='{0}_set'.format(set_name))
+        
         mesh_set.addMembers(match_list)
+        
     else:
         pm.warning('No match found!')
     
 
 '''
-pattern = r'^[\w\d|]*katt[\w\d|]*$'
+pattern = r'^[\w\d|]*test[\w\d|]*$'
 nodetype = pm.nodetypes.Mesh
 use_longname = True
 use_parent = True
-set_name = 'katt'
+set_name = 'apa'
 
 
 create_set_from_regex(  pattern=pattern,
@@ -58,4 +68,3 @@ create_set_from_regex(  pattern=pattern,
                         use_parent=use_parent,
                         set_name=set_name)
 '''
-
