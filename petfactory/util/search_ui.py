@@ -77,8 +77,7 @@ class RegexWidget(QtGui.QWidget):
                                             use_longname=use_longname,
                                             use_parent=use_parent,
                                             set_name=set_name)
-        
-
+'''
 try:
     win.close()
     
@@ -88,3 +87,4 @@ except NameError:
 win = RegexWidget(parent=maya_main_window())
 win.show()
 win.move(100,150)
+'''
