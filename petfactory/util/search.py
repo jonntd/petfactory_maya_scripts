@@ -2,12 +2,12 @@ import re
 import pprint
 
 
-pattern = r'^[\w\d|]*pipes[\w\d|]*$'
+pattern = r'^[\w\d|]*weld[\w\d|]*$'
 nodetype = pm.nodetypes.Mesh
 use_longname = True
 use_shape = True
 match_list = []
-
+set_name = 'weld'
 node_list = pm.ls(type='transform')
 
 for node in node_list:
@@ -37,5 +37,5 @@ for node in node_list:
 #pprint.pprint(match_list)
 
 pm.select(deselect=True)
-mesh_set = pm.sets(name='mesh_set')
+mesh_set = pm.sets(name='{0}_set'.format(set_name))
 mesh_set.addMembers(match_list)
