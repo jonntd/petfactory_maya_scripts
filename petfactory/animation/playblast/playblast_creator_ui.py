@@ -2,10 +2,14 @@ from PySide import QtCore, QtGui
 from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
 from functools import partial
+import pprint
 
 import petfactory.gui.simple_widget as simple_widget
 
 import petfactory.util.verify as pet_verify
+
+import petfactory.animation.playblast.playblast_creator as playblast_creator
+reload(playblast_creator)
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
@@ -141,7 +145,80 @@ class PlayblastWidget(QtGui.QWidget):
             #print('ESCAPE')
             
     def playblast_clicked(self):
-        print('apa')
+        
+        width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
+        
+        
+        # get the camera info form the table view
+        root = self.model.invisibleRootItem()
+        num_children = self.model.rowCount()
+        
+        if num_children < 1:
+            pm.warning('Please add some cameras to the tableview!')
+            return
+        
+        clip_list = []
+        
+        playblast_dict = {}
+        playblast_dict['width'] = width
+        playblast_dict['height'] = height
+        playblast_dict['clips'] = clip_list
+        
+        
+        
+        for i in range(num_children):
+            
+            info_dict = {}
+            clip_list.append(info_dict)
+            
+            child = root.child(i)
+            
+            if child.checkState():
+                
+                cam_name = child.text()
+                
+                if pet_verify.verify_string(cam_name, pm.nodetypes.Camera):
+                    
+                    row = child.row()
+                    
+                    camera = pet_verify.to_pynode(cam_name)
+                    
+                    if camera is None:
+                        pm.warning('Not a valid camera, skipping')
+                        continue
+                        
+                    start_time = self.model.item(row, 2)
+                    
+                    if start_time is None:
+                        pm.warning('No start time specified, skipping')
+                        continue
+                        
+                    end_time = self.model.item(row, 3)
+                    
+                    if end_time is None:
+                        pm.warning('No end time specified, skipping')
+                        continue
+                        
+                    
+                    info_dict['camera'] = camera
+                    info_dict['start_time'] = start_time.text()
+                    info_dict['end_time'] = end_time.text()
+                    
+                    
+
+                    
+                    
+        pprint.pprint(playblast_dict)
+        
+        
+        '''
+        do_playblast(   current_camera,
+                        start_time,
+                        end_time,
+                        file_name,
+                        width,
+                        height)
+        '''
         
     def add_cam_button_click(self):
         
