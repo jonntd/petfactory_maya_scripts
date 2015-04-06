@@ -167,68 +167,84 @@ class PlayblastWidget(QtGui.QWidget):
         
         
         for i in range(num_children):
-            
-            info_dict = {}
-            clip_list.append(info_dict)
-            
+
             child = root.child(i)
             
             if child.checkState():
                 
-                cam_name = child.text()
+                info_dict = {}
+                clip_list.append(info_dict)
+
+                row = child.row()
                 
-                if pet_verify.verify_string(cam_name, pm.nodetypes.Camera):
+                cam_name = child.text()
+                camera = pet_verify.to_pynode(cam_name)
+                                    
+                if camera is None:
+                    pm.warning('Not a valid camera, skipping')
+                    continue
                     
-                    row = child.row()
+                start_time = self.model.item(row, 2)
+                
+                if start_time is None:
+                    pm.warning('No start time specified, skipping')
+                    continue
                     
-                    camera = pet_verify.to_pynode(cam_name)
+                end_time = self.model.item(row, 3)
+                
+                if end_time is None:
+                    pm.warning('No end time specified, skipping')
+                    continue
                     
-                    if camera is None:
-                        pm.warning('Not a valid camera, skipping')
-                        continue
-                        
-                    start_time = self.model.item(row, 2)
-                    
-                    if start_time is None:
-                        pm.warning('No start time specified, skipping')
-                        continue
-                        
-                    end_time = self.model.item(row, 3)
-                    
-                    if end_time is None:
-                        pm.warning('No end time specified, skipping')
-                        continue
-                        
-                    
-                    info_dict['camera'] = camera
-                    info_dict['start_time'] = start_time.text()
-                    info_dict['end_time'] = end_time.text()
-                    
-                    
+                
+                info_dict['camera'] = camera
+                info_dict['start_time'] = start_time.text()
+                info_dict['end_time'] = end_time.text()
+                
+                
 
                     
                     
         pprint.pprint(playblast_dict)
         
+        clip_info_list = playblast_dict.get('clips')
         
-        '''
-        do_playblast(   current_camera,
-                        start_time,
-                        end_time,
-                        file_name,
-                        width,
-                        height)
-        '''
+        
+        for clip_info in clip_info_list:
+            
+            cam = clip_info.get('camera')
+            start_time = clip_info.get('start_time')
+            end_time = clip_info.get('end_time')
+        
+            playblast_creator.do_playblast( current_camera=cam,
+                                            start_time=start_time,
+                                            end_time=end_time,
+                                            file_name='{0}_clip'.format(cam.shortName()),
+                                            width=width,
+                                            height=height)
         
     def add_cam_button_click(self):
         
         sel_list = pm.ls(sl=True)
+        sel_list.sort()
         
         
         for sel in sel_list:
+            
             if pet_verify.verify_pynode(sel, pm.nodetypes.Camera):
                 
-                win.add_clip(pet_verify.to_transform(sel).shortName())
+                # get keyframes info from the camera
+                key_list = list(set(pm.keyframe(sel, q=True, timeChange=True)))
+                
+                if len(key_list) > 0:
+                    key_list.sort()
+                    first_keyframe = key_list[0]
+                    last_keyframe = key_list[-1]
+                    
+                else:
+                    first_keyframe = last_keyframe = 0
+                
+                win.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe)
     
     def remove_cam_button_click(self):
         
@@ -244,15 +260,39 @@ class PlayblastWidget(QtGui.QWidget):
             self.model.removeRow(row)
             
             
-    def add_clip(self, name):
+    def add_clip(self, name, start_time, end_time):
         
-        item = QtGui.QStandardItem()
-        item.setCheckable(True)
-        item.setCheckState(QtCore.Qt.Checked)
+        num_rows = self.model.rowCount()
+   
+        # cam item
+        cam_item = QtGui.QStandardItem()
+        cam_item.setCheckable(True)
+        cam_item.setData(name, QtCore.Qt.EditRole)
         
-        item.setData(name, QtCore.Qt.EditRole)
+        # uncheck cameras that have no animation
+        if start_time == end_time:
+            cam_item.setCheckState(QtCore.Qt.Unchecked)
+            
+        else:
+            cam_item.setCheckState(QtCore.Qt.Checked)
+
+        # start time item
+        start_time_item = QtGui.QStandardItem()
+        start_time_item.setData(start_time, QtCore.Qt.EditRole)
+        
+        # end time item
+        end_time_item = QtGui.QStandardItem()
+        end_time_item.setData(end_time, QtCore.Qt.EditRole) 
                 
-        self.model.appendRow(item) 
+        self.model.setItem(num_rows, 0, cam_item)
+        self.model.setItem(num_rows, 2, start_time_item)
+        self.model.setItem(num_rows, 3, end_time_item)
+        
+        
+        print(start_time, end_time)
+        
+        
+
     
     def save_clips_action_triggered(self):
         print(self.sender())
@@ -275,3 +315,4 @@ except NameError:
 win = PlayblastWidget(parent=maya_main_window())
 win.show()
 win.move(100,150)
+
