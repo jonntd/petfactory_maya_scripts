@@ -9,7 +9,24 @@ def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
     
-  
+class MyDelegate(QtGui.QItemDelegate):
+    
+    def __init__(self, parent=None):
+        super(MyDelegate, self).__init__(parent)
+        
+    def createEditor(self, parent, option, index):
+        
+        column = index.column()
+        
+        if column == 2 or column == 3: 
+            spinbox = QtGui.QSpinBox(parent)
+            spinbox.setRange(-9999,9999)
+            spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+            return spinbox
+        
+        else:
+            return QtGui.QLineEdit(parent)
+          
 class PlayblastWidget(QtGui.QWidget):
  
     def __init__(self, parent=None):
@@ -46,9 +63,20 @@ class PlayblastWidget(QtGui.QWidget):
         
         # -----------------------------------------------------------------------
         
-
+        # model
+        self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Camera', 'Suffix', 'start', 'end'])
+        
+        
         # tableview
         self.clip_tableview = QtGui.QTableView()
+        self.clip_tableview.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.clip_tableview.setAlternatingRowColors(True)
+        self.clip_tableview.setModel(self.model)
+        self.clip_tableview.setItemDelegate(MyDelegate(self.clip_tableview))
+        h_header = self.clip_tableview.horizontalHeader()
+        h_header.setResizeMode(QtGui.QHeaderView.Stretch)
+        
         self.content_layout.addWidget(self.clip_tableview)
         
         self.resolution_dict = {'1920 x 1080':(1920, 1080),
@@ -61,7 +89,20 @@ class PlayblastWidget(QtGui.QWidget):
         # resolution
         self.resolution_combobox = simple_widget.labeled_combobox(label='Resolution', parent_layout=self.content_layout, items=resolution_keys)
         
+        self.add_clip()
         
+    def add_clip(self):
+        
+        cam_item = QtGui.QStandardItem()
+        cam_item.setData('Camera 1', QtCore.Qt.EditRole)
+        
+        suffix_item = QtGui.QStandardItem()
+        suffix_item.setData('sufix', QtCore.Qt.EditRole)
+        
+        # add items
+        self.model.setItem(0, 0, cam_item)
+        self.model.setItem(0, 1, suffix_item)
+            
     
     def save_clips_action_triggered(self):
         print(self.sender())
