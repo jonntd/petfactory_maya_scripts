@@ -4,6 +4,8 @@ import maya.OpenMayaUI as omui
 from functools import partial
 import pprint
 import maya.mel as mel
+import os
+import json
 
 import petfactory.gui.simple_widget as simple_widget
 
@@ -158,10 +160,7 @@ class PlayblastWidget(QtGui.QWidget):
         #if event.key() == QtCore.Qt.Key_Escape:
             #print('ESCAPE')
             
-    def playblast_clicked(self):
-        
-        width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
-        
+    def build_info_dict(self):
         
         # get the camera info form the table view
         root = self.model.invisibleRootItem()
@@ -172,13 +171,9 @@ class PlayblastWidget(QtGui.QWidget):
             return
         
         clip_list = []
-        
         playblast_dict = {}
-        playblast_dict['width'] = width
-        playblast_dict['height'] = height
         playblast_dict['clips'] = clip_list
-        
-        
+
         
         for i in range(num_children):
 
@@ -211,19 +206,27 @@ class PlayblastWidget(QtGui.QWidget):
                     continue
                     
                 
-                info_dict['camera'] = camera
+                info_dict['camera'] = camera.shortName()
                 info_dict['start_time'] = start_time.text()
                 info_dict['end_time'] = end_time.text()
                 
                 
-
-                    
-                    
+        width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
+        playblast_dict['width'] = width
+        playblast_dict['height'] = height
+        
+        return playblast_dict
+                
+        
+        
+    def playblast_clicked(self):
+        
+        playblast_dict = self.build_info_dict()         
         #pprint.pprint(playblast_dict)
         
         clip_info_list = playblast_dict.get('clips')
-        
-        
+        width = playblast_dict.get('width')
+        height = playblast_dict.get('height')
         
         dir_path = playblast_creator.create_playblast_directory()
         
@@ -236,9 +239,11 @@ class PlayblastWidget(QtGui.QWidget):
             start_time = clip_info.get('start_time')
             end_time = clip_info.get('end_time')
             
+            cam_node = pet_verify.to_pynode(cam)
+            
                 
-            playblast_creator.do_playblast( current_camera=cam,
-                                            file_name='{0}_clip'.format(cam.shortName()),
+            playblast_creator.do_playblast( current_camera=cam_node,
+                                            file_name='{0}_clip'.format(cam),
                                             start_time=start_time,
                                             end_time=end_time,
                                             dir_path=dir_path,
@@ -352,7 +357,21 @@ class PlayblastWidget(QtGui.QWidget):
 
     
     def save_clips_action_triggered(self):
-        print(self.sender())
+        
+        file_name, selected_filter = QtGui.QFileDialog.getSaveFileName(None, 'Save Keyframes', None, 'JSON (*.json)')
+    
+        playblast_dict = self.build_info_dict() 
+        json_data = json.dumps(playblast_dict, indent=4)
+        
+        if file_name:
+            with open(file_name, 'w') as f:
+                f = open(file_name,'w')
+                f.write(json_data)
+                f.close()
+                print('Data saved to file: {0}'.format(file_name))       
+    
+        else:
+            print('Could not save file')
         
     
     def load_clips_action_triggered(self):
