@@ -3,6 +3,7 @@ from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
 from functools import partial
 import pprint
+import maya.mel as mel
 
 import petfactory.gui.simple_widget as simple_widget
 
@@ -76,6 +77,11 @@ class PlayblastWidget(QtGui.QWidget):
         self.model = QtGui.QStandardItemModel()
         self.model.setHorizontalHeaderLabels(['Camera', 'Suffix', 'start', 'end'])
         
+        # clip group box
+        clip_groupbox = QtGui.QGroupBox("Clips")
+        self.content_layout.addWidget(clip_groupbox)
+        clip_groupbox_vbox = QtGui.QVBoxLayout()
+        clip_groupbox.setLayout(clip_groupbox_vbox)
         
         # tableview
         self.clip_tableview = QtGui.QTableView()
@@ -91,30 +97,38 @@ class PlayblastWidget(QtGui.QWidget):
         self.clip_tableview.setColumnWidth(2, 75)
         self.clip_tableview.setColumnWidth(3, 75)
         
-        self.content_layout.addWidget(self.clip_tableview)
+        clip_groupbox_vbox.addWidget(self.clip_tableview)
         
         
         
         
-        # add joint ref
+        # tableview buttons layout
         add_remove_cam_hbox = QtGui.QHBoxLayout()
-        self.content_layout.addLayout(add_remove_cam_hbox)  
+        clip_groupbox_vbox.addLayout(add_remove_cam_hbox)  
         
         # add
         add_cam_button = QtGui.QPushButton(' + ')
         add_cam_button.setMinimumWidth(40)
-        
         add_remove_cam_hbox.addWidget(add_cam_button)
         add_cam_button.clicked.connect(self.add_cam_button_click)
         
         # remove
         remove_cam_button = QtGui.QPushButton(' - ')
         remove_cam_button.setMinimumWidth(40)
-        
         add_remove_cam_hbox.addWidget(remove_cam_button)
         remove_cam_button.clicked.connect(self.remove_cam_button_click)
         
         add_remove_cam_hbox.addStretch()
+         
+        # look through camera
+        look_through_button = QtGui.QPushButton('Look through camera')
+        add_remove_cam_hbox.addWidget(look_through_button)
+        look_through_button.clicked.connect(self.look_through_button_click)
+        
+        
+        
+        
+        
         
         self.resolution_dict = {'1920 x 1080':(1920, 1080),
                                 '1280 x 720':(1280, 720),
@@ -205,24 +219,67 @@ class PlayblastWidget(QtGui.QWidget):
 
                     
                     
-        pprint.pprint(playblast_dict)
+        #pprint.pprint(playblast_dict)
         
         clip_info_list = playblast_dict.get('clips')
         
         
+        
+        dir_path = playblast_creator.create_playblast_directory()
+        
+        if dir_path is None:
+            return
+    
         for clip_info in clip_info_list:
             
             cam = clip_info.get('camera')
             start_time = clip_info.get('start_time')
             end_time = clip_info.get('end_time')
-        
+            
+                
             playblast_creator.do_playblast( current_camera=cam,
+                                            file_name='{0}_clip'.format(cam.shortName()),
                                             start_time=start_time,
                                             end_time=end_time,
-                                            file_name='{0}_clip'.format(cam.shortName()),
+                                            dir_path=dir_path,
                                             width=width,
                                             height=height)
+    
+    def look_through_button_click(self):
+    
+        selection_model = self.clip_tableview.selectionModel()
         
+        # returns QModelIndex
+        selected_rows = selection_model.selectedRows()
+        
+        if len(selected_rows) < 1:
+            pm.warning('Select an entire row!')
+            return
+        
+        current_row = selected_rows[0].row()
+        
+        camera_string = self.model.item(current_row, 0).text() 
+        current_camera = pet_verify.to_pynode(camera_string)
+        
+        
+        if current_camera is None:
+            pm.warning('The camera "{0}" does not exist'.format(camera_string))
+            return
+            
+        
+        start_time = self.model.item(current_row, 2).text()
+        end_time = self.model.item(current_row, 3).text() 
+
+        mel.eval('lookThroughModelPanel {0} modelPanel4'.format(current_camera))
+        
+        
+        if start_time > end_time:
+            pm.warning('The start time cannot be greater than the end time!')
+            
+        else:
+            pm.playbackOptions(min=start_time, max=end_time)
+   
+
     def add_cam_button_click(self):
         
         sel_list = pm.ls(sl=True)
@@ -289,7 +346,7 @@ class PlayblastWidget(QtGui.QWidget):
         self.model.setItem(num_rows, 3, end_time_item)
         
         
-        print(start_time, end_time)
+        #print(start_time, end_time)
         
         
 
@@ -314,5 +371,5 @@ except NameError:
     
 win = PlayblastWidget(parent=maya_main_window())
 win.show()
-win.move(100,150)
+win.move(250,150)
 
