@@ -5,6 +5,8 @@ from functools import partial
 
 import petfactory.gui.simple_widget as simple_widget
 
+import petfactory.util.verify as pet_verify
+
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
@@ -33,6 +35,9 @@ class PlayblastWidget(QtGui.QWidget):
  
         super(PlayblastWidget, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
+        
+        self.resize(485, 300)
+        self.setWindowTitle('Playblast')
         
         # main layout
         self.main_layout = QtGui.QVBoxLayout()
@@ -74,10 +79,38 @@ class PlayblastWidget(QtGui.QWidget):
         self.clip_tableview.setAlternatingRowColors(True)
         self.clip_tableview.setModel(self.model)
         self.clip_tableview.setItemDelegate(MyDelegate(self.clip_tableview))
-        h_header = self.clip_tableview.horizontalHeader()
-        h_header.setResizeMode(QtGui.QHeaderView.Stretch)
+        #h_header = self.clip_tableview.horizontalHeader()
+        #h_header.setResizeMode(QtGui.QHeaderView.Stretch)
+        
+        self.clip_tableview.setColumnWidth(0, 200)
+        self.clip_tableview.setColumnWidth(1, 100)
+        self.clip_tableview.setColumnWidth(2, 75)
+        self.clip_tableview.setColumnWidth(3, 75)
         
         self.content_layout.addWidget(self.clip_tableview)
+        
+        
+        
+        
+        # add joint ref
+        add_remove_cam_hbox = QtGui.QHBoxLayout()
+        self.content_layout.addLayout(add_remove_cam_hbox)  
+        
+        # add
+        add_cam_button = QtGui.QPushButton(' + ')
+        add_cam_button.setMinimumWidth(40)
+        
+        add_remove_cam_hbox.addWidget(add_cam_button)
+        add_cam_button.clicked.connect(self.add_cam_button_click)
+        
+        # remove
+        remove_cam_button = QtGui.QPushButton(' - ')
+        remove_cam_button.setMinimumWidth(40)
+        
+        add_remove_cam_hbox.addWidget(remove_cam_button)
+        remove_cam_button.clicked.connect(self.remove_cam_button_click)
+        
+        add_remove_cam_hbox.addStretch()
         
         self.resolution_dict = {'1920 x 1080':(1920, 1080),
                                 '1280 x 720':(1280, 720),
@@ -89,20 +122,60 @@ class PlayblastWidget(QtGui.QWidget):
         # resolution
         self.resolution_combobox = simple_widget.labeled_combobox(label='Resolution', parent_layout=self.content_layout, items=resolution_keys)
         
-        self.add_clip()
         
-    def add_clip(self):
+        # do it
+        playblast_hbox = QtGui.QHBoxLayout()
+        self.content_layout.addLayout(playblast_hbox)
         
-        cam_item = QtGui.QStandardItem()
-        cam_item.setData('Camera 1', QtCore.Qt.EditRole)
+        playblast_button = QtGui.QPushButton('Playblast')
+        playblast_button.setMinimumWidth(125)
+        playblast_hbox.addStretch()
+        playblast_hbox.addWidget(playblast_button)
+        playblast_button.clicked.connect(self.playblast_clicked)
         
-        suffix_item = QtGui.QStandardItem()
-        suffix_item.setData('sufix', QtCore.Qt.EditRole)
         
-        # add items
-        self.model.setItem(0, 0, cam_item)
-        self.model.setItem(0, 1, suffix_item)
+    # stop keypress event propagation
+    def keyPressEvent(self, event):
+        pass
+        #if event.key() == QtCore.Qt.Key_Escape:
+            #print('ESCAPE')
             
+    def playblast_clicked(self):
+        print('apa')
+        
+    def add_cam_button_click(self):
+        
+        sel_list = pm.ls(sl=True)
+        
+        
+        for sel in sel_list:
+            if pet_verify.verify_pynode(sel, pm.nodetypes.Camera):
+                
+                win.add_clip(pet_verify.to_transform(sel).shortName())
+    
+    def remove_cam_button_click(self):
+        
+        selection_model = self.clip_tableview.selectionModel()
+        
+        # returns QModelIndex
+        selected_rows = selection_model.selectedRows()
+        
+        row_list = [sel.row() for sel in selected_rows]
+        row_list.sort(reverse=True)
+        
+        for row in row_list:
+            self.model.removeRow(row)
+            
+            
+    def add_clip(self, name):
+        
+        item = QtGui.QStandardItem()
+        item.setCheckable(True)
+        item.setCheckState(QtCore.Qt.Checked)
+        
+        item.setData(name, QtCore.Qt.EditRole)
+                
+        self.model.appendRow(item) 
     
     def save_clips_action_triggered(self):
         print(self.sender())
