@@ -37,26 +37,21 @@ def do_playblast(current_camera, file_name, start_time, end_time, dir_path, widt
     print('Playblast created in directory:\n{0}'.format(dir_path))
 
 
-def create_playblast_directory(root_path=None):
+def create_playblast_directory(root_path):
     
     time_string = datetime.datetime.now().strftime("%Y-%m-%d %H.%M.%S")
-    
     dir_name = 'playblasts {0}'.format(time_string)
- 
-    if root_path is None:
-        root_path = os.path.join(pm.workspace.getPath(), 'movies')
-    
+
     dir_path = os.path.join(root_path, dir_name)
 
- 
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
         return dir_path
-        
+
     else:
         print('Exists!')
         return None
-    
+
 
 '''
 cam_1 = pm.PyNode('camera1')

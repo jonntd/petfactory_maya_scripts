@@ -15,6 +15,7 @@ import petfactory.animation.playblast.playblast_creator as playblast_creator
 reload(playblast_creator)
 
 import petfactory.gui.persistence as pet_persistence
+reload(pet_persistence)
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
@@ -48,6 +49,8 @@ class PlayblastWidget(QtGui.QWidget):
         self.resize(485, 300)
         self.setWindowTitle('Playblast')
         
+        self.output_dir = None
+        
         # main layout
         self.main_layout = QtGui.QVBoxLayout()
         self.main_layout.setContentsMargins(0,0,0,0)
@@ -68,6 +71,11 @@ class PlayblastWidget(QtGui.QWidget):
         self.load_clips_action = QtGui.QAction('Load clips', self)
         self.load_clips_action.triggered.connect(self.load_clips_action_triggered)
         self.file_menu.addAction(self.load_clips_action)
+        
+        self.set_output_dir_action = QtGui.QAction('Set output directory', self)
+        self.set_output_dir_action.triggered.connect(self.set_output_dir_triggered)
+        self.file_menu.addAction(self.set_output_dir_action)
+        
         
         # content layout
         self.content_layout = QtGui.QVBoxLayout()
@@ -262,14 +270,30 @@ class PlayblastWidget(QtGui.QWidget):
         
     def playblast_clicked(self):
         
+        if self.output_dir is None:
+            pm.warning('Output directory not set! File > Set output directory')
+            return
+            
+        if not os.path.exists(self.output_dir):
+            pm.warning('{0} is not a valid directory! Please set a new one'.format(self.output_dir))
+            self.output_dir = None
+            return
+        
+        
+        print(self.output_dir)
+            
         playblast_dict = self.build_info_dict()         
         #pprint.pprint(playblast_dict)
         
+        if playblast_dict is None:
+            return
+
         clip_info_list = playblast_dict.get('clips')
         width = playblast_dict.get('width')
         height = playblast_dict.get('height')
         
-        dir_path = playblast_creator.create_playblast_directory()
+        
+        dir_path = playblast_creator.create_playblast_directory(self.output_dir)
         
         if dir_path is None:
             return
@@ -335,11 +359,11 @@ class PlayblastWidget(QtGui.QWidget):
                 
                 if len(key_list) > 0:
                     key_list.sort()
-                    first_keyframe = key_list[0]
-                    last_keyframe = key_list[-1]
+                    first_keyframe = str(int(key_list[0]))
+                    last_keyframe = str(int(key_list[-1]))
                     
                 else:
-                    first_keyframe = last_keyframe = 0
+                    first_keyframe = last_keyframe = '0'
                 
                 win.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
     
@@ -363,6 +387,7 @@ class PlayblastWidget(QtGui.QWidget):
             
     def add_clip(self, name, start_time, end_time, notes):
         
+        #print(name, start_time, end_time, notes)
 
         # cam item
         cam_item = QtGui.QStandardItem(name)
@@ -407,6 +432,12 @@ class PlayblastWidget(QtGui.QWidget):
   
         pet_persistence.save_json(playblast_dict, title='Save clips', filter='JSON (*.json)')
 
+    def set_output_dir_triggered(self):
+        
+        start_dir = pm.workspace.getPath()
+        self.output_dir = pet_persistence.select_dir(title='Select output dir', dir=start_dir)
+               
+        
     def load_clips_action_triggered(self):
      
         clip_dict = pet_persistence.load_json(title='Load clips', filter='JSON (*.json)')

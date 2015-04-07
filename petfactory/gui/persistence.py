@@ -36,3 +36,14 @@ def save_json(save_dict, title, filter):
 
     else:
         print('Could not save file')
+
+def select_dir(title, dir):
+    '''select_dir(title='Hello world', dir='/Users/johan/Desktop')'''
+
+    dir_path = QtGui.QFileDialog.getExistingDirectory(None, title, dir, QtGui.QFileDialog.ShowDirsOnly)
+
+    if dir_path:
+        return dir_path
+
+    else:
+        return None
