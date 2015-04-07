@@ -121,7 +121,17 @@ class PlayblastWidget(QtGui.QWidget):
         remove_cam_button.clicked.connect(self.remove_cam_button_click)
         
         add_remove_cam_hbox.addStretch()
-         
+        
+        # set start time
+        self.set_start_time_button = QtGui.QPushButton('|<')
+        add_remove_cam_hbox.addWidget(self.set_start_time_button)
+        self.set_start_time_button.clicked.connect(self.set_time_button_clicked)
+        
+        # set start time
+        self.set_end_time_button = QtGui.QPushButton('>|')
+        add_remove_cam_hbox.addWidget(self.set_end_time_button)
+        self.set_end_time_button.clicked.connect(self.set_time_button_clicked)
+        
         # look through camera
         look_through_button = QtGui.QPushButton('Look through camera')
         add_remove_cam_hbox.addWidget(look_through_button)
@@ -159,7 +169,33 @@ class PlayblastWidget(QtGui.QWidget):
         pass
         #if event.key() == QtCore.Qt.Key_Escape:
             #print('ESCAPE')
+    
+    def get_selected_row(self):
+        
+        selection_model = self.clip_tableview.selectionModel()
+        selected_indexes = selection_model.selectedIndexes()
+        
+        if len(selected_indexes) < 1:
+            pm.warning('No clip is selected!')
+            return None
             
+        return selected_indexes[0].row()
+        
+    def set_time_button_clicked(self):
+
+        selected_row = self.get_selected_row()
+        
+        if selected_row is None:
+            return
+
+        if self.sender() == self.set_start_time_button:
+            item = self.model.item(selected_row, 2)
+            item.setText(str(int(pm.currentTime(q=True))))
+
+        else:
+            item = self.model.item(selected_row, 3)
+            item.setText(str(int(pm.currentTime(q=True))))
+    
     def build_info_dict(self):
         
         # get the camera info form the table view
@@ -251,17 +287,11 @@ class PlayblastWidget(QtGui.QWidget):
                                             height=height)
     
     def look_through_button_click(self):
-    
-        selection_model = self.clip_tableview.selectionModel()
         
-        # returns QModelIndex
-        selected_rows = selection_model.selectedRows()
+        current_row = self.get_selected_row()
         
-        if len(selected_rows) < 1:
-            pm.warning('Select an entire row!')
+        if current_row is None:
             return
-        
-        current_row = selected_rows[0].row()
         
         camera_string = self.model.item(current_row, 0).text() 
         current_camera = pet_verify.to_pynode(camera_string)
@@ -314,6 +344,10 @@ class PlayblastWidget(QtGui.QWidget):
         
         # returns QModelIndex
         selected_rows = selection_model.selectedRows()
+        
+        if len(selected_rows) < 1:
+            pm.warning('Select an entire row to delete a track!')
+            return
         
         row_list = [sel.row() for sel in selected_rows]
         row_list.sort(reverse=True)
