@@ -14,6 +14,8 @@ import petfactory.util.verify as pet_verify
 import petfactory.animation.playblast.playblast_creator as playblast_creator
 reload(playblast_creator)
 
+import petfactory.gui.persistence as pet_persistence
+
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
@@ -384,32 +386,17 @@ class PlayblastWidget(QtGui.QWidget):
         self.model.setItem(num_rows, 2, start_time_item)
         self.model.setItem(num_rows, 3, end_time_item)
         
-        
-        #print(start_time, end_time)
-        
-        
-
-    
+   
+  
     def save_clips_action_triggered(self):
         
-        file_name, selected_filter = QtGui.QFileDialog.getSaveFileName(None, 'Save Keyframes', None, 'JSON (*.json)')
-    
         playblast_dict = self.build_info_dict() 
-        json_data = json.dumps(playblast_dict, indent=4)
-        
-        if file_name:
-            with open(file_name, 'w') as f:
-                f = open(file_name,'w')
-                f.write(json_data)
-                f.close()
-                print('Data saved to file: {0}'.format(file_name))       
-    
-        else:
-            print('Could not save file')
-        
-    
+        pet_persistence.save_json(playblast_dict, title='Save clips', filter='JSON (*.json)')
+
     def load_clips_action_triggered(self):
-        print(self.sender())
+     
+        clip_dict = pet_persistence.load_json(title='Load clips', filter='JSON (*.json)')
+        print(clip_dict)
 
 
 def show():
