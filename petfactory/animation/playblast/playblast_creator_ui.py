@@ -79,7 +79,7 @@ class PlayblastWidget(QtGui.QWidget):
         
         # model
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Camera', 'Suffix', 'start', 'end'])
+        self.model.setHorizontalHeaderLabels(['Camera', 'Notes', 'start', 'end'])
         
         # clip group box
         clip_groupbox = QtGui.QGroupBox("Clips")
@@ -206,7 +206,7 @@ class PlayblastWidget(QtGui.QWidget):
         
         if num_children < 1:
             pm.warning('Please add some cameras to the tableview!')
-            return
+            return None
         
         clip_list = []
         playblast_dict = {}
@@ -230,7 +230,9 @@ class PlayblastWidget(QtGui.QWidget):
                 if camera is None:
                     pm.warning('Not a valid camera, skipping')
                     continue
-                    
+                
+                notes = self.model.item(row, 1)
+                
                 start_time = self.model.item(row, 2)
                 
                 if start_time is None:
@@ -247,6 +249,7 @@ class PlayblastWidget(QtGui.QWidget):
                 info_dict['camera'] = camera.shortName()
                 info_dict['start_time'] = start_time.text()
                 info_dict['end_time'] = end_time.text()
+                info_dict['notes'] = notes.text() 
                 
                 
         width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
@@ -338,7 +341,7 @@ class PlayblastWidget(QtGui.QWidget):
                 else:
                     first_keyframe = last_keyframe = 0
                 
-                win.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe)
+                win.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
     
     def remove_cam_button_click(self):
         
@@ -358,14 +361,12 @@ class PlayblastWidget(QtGui.QWidget):
             self.model.removeRow(row)
             
             
-    def add_clip(self, name, start_time, end_time):
+    def add_clip(self, name, start_time, end_time, notes):
         
-        num_rows = self.model.rowCount()
-   
+
         # cam item
-        cam_item = QtGui.QStandardItem()
+        cam_item = QtGui.QStandardItem(name)
         cam_item.setCheckable(True)
-        cam_item.setData(name, QtCore.Qt.EditRole)
         
         # uncheck cameras that have no animation
         if start_time == end_time:
@@ -374,15 +375,17 @@ class PlayblastWidget(QtGui.QWidget):
         else:
             cam_item.setCheckState(QtCore.Qt.Checked)
 
-        # start time item
-        start_time_item = QtGui.QStandardItem()
-        start_time_item.setData(start_time, QtCore.Qt.EditRole)
+        # add other items
+        start_time_item = QtGui.QStandardItem(start_time)
+        notes_item = QtGui.QStandardItem(notes)
+        end_time_item = QtGui.QStandardItem(end_time)
         
-        # end time item
-        end_time_item = QtGui.QStandardItem()
-        end_time_item.setData(end_time, QtCore.Qt.EditRole) 
-                
+        # add itemns to model
+        # get the curr num rows so that we can insert the items at a free row
+        num_rows = self.model.rowCount()
+        
         self.model.setItem(num_rows, 0, cam_item)
+        self.model.setItem(num_rows, 1, notes_item)
         self.model.setItem(num_rows, 2, start_time_item)
         self.model.setItem(num_rows, 3, end_time_item)
         
@@ -390,13 +393,44 @@ class PlayblastWidget(QtGui.QWidget):
   
     def save_clips_action_triggered(self):
         
-        playblast_dict = self.build_info_dict() 
+        playblast_dict = self.build_info_dict()
+        
+        if playblast_dict is None:
+            return
+        
+        #pprint.pprint(playblast_dict)
+        
+        clip_list = playblast_dict.get('clips')
+        if len(clip_list) < 1:
+            pm.warning('The clip list is empty, file not saved.. Make sure that the clips are checked.')
+            return None
+  
         pet_persistence.save_json(playblast_dict, title='Save clips', filter='JSON (*.json)')
 
     def load_clips_action_triggered(self):
      
         clip_dict = pet_persistence.load_json(title='Load clips', filter='JSON (*.json)')
-        print(clip_dict)
+        #pprint.pprint(clip_dict)
+        
+        if clip_dict is None:
+            return
+        
+        clip_list = clip_dict.get('clips')
+        
+        if clip_list is None:
+            pm.warning('Could not load clips!')
+            return
+                
+        for clip in clip_list:
+            
+            cam = clip.get('camera')
+            start_time = clip.get('start_time')
+            end_time = clip.get('end_time')
+            notes = clip.get('notes')
+            
+            print(cam, start_time, end_time, notes)
+            
+            self.add_clip(name=cam, start_time=start_time, end_time=end_time, notes=notes)
 
 
 def show():
