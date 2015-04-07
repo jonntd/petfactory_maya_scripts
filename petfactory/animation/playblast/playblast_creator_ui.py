@@ -6,6 +6,7 @@ import pprint
 import maya.mel as mel
 import os
 import json
+import pymel.core as pm
 
 import petfactory.gui.simple_widget as simple_widget
 
@@ -365,7 +366,7 @@ class PlayblastWidget(QtGui.QWidget):
                 else:
                     first_keyframe = last_keyframe = '0'
                 
-                win.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
+                self.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
     
     def remove_cam_button_click(self):
         
