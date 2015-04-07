@@ -467,7 +467,7 @@ class PlayblastWidget(QtGui.QWidget):
 def show():
     win = PlayblastWidget(parent=maya_main_window())
     win.show()
-
+'''
 try:
     win.close()
     
@@ -477,4 +477,4 @@ except NameError:
 win = PlayblastWidget(parent=maya_main_window())
 win.show()
 win.move(250,150)
-
+'''
