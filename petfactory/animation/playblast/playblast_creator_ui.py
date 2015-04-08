@@ -85,16 +85,21 @@ class PlayblastWidget(QtGui.QWidget):
         
         
         # -----------------------------------------------------------------------
-        
-        # model
-        self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Camera', 'Notes', 'start', 'end'])
+        #
+        # clips
+        #
+        # -----------------------------------------------------------------------
         
         # clip group box
         clip_groupbox = QtGui.QGroupBox("Clips")
         self.content_layout.addWidget(clip_groupbox)
         clip_groupbox_vbox = QtGui.QVBoxLayout()
         clip_groupbox.setLayout(clip_groupbox_vbox)
+        
+        
+        # model
+        self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Camera', 'Notes', 'start', 'end'])  
         
         # tableview
         self.clip_tableview = QtGui.QTableView()
@@ -111,8 +116,6 @@ class PlayblastWidget(QtGui.QWidget):
         self.clip_tableview.setColumnWidth(3, 75)
         
         clip_groupbox_vbox.addWidget(self.clip_tableview)
-        
-        
         
         
         # tableview buttons layout
@@ -133,26 +136,70 @@ class PlayblastWidget(QtGui.QWidget):
         
         add_remove_cam_hbox.addStretch()
         
+
+        
+        # -----------------------------------------------------------------------
+        #
+        # Camera
+        #
+        # -----------------------------------------------------------------------
+        
+        
+        # camera group box
+        camera_groupbox = QtGui.QGroupBox("Camera")
+        self.content_layout.addWidget(camera_groupbox)
+
+        # grid layout
+        camera_groupbox_gridlayout = QtGui.QGridLayout()
+        camera_groupbox.setLayout(camera_groupbox_gridlayout)
+        camera_groupbox_gridlayout.setColumnStretch(3, 1)
+        camera_groupbox_gridlayout.setColumnMinimumWidth(0, 100)
+        camera_groupbox_gridlayout.setColumnMinimumWidth(1, 150)
+        
+        # start end time label
+        start_end_time_label = QtGui.QLabel('Set start/end time')
+        camera_groupbox_gridlayout.addWidget(start_end_time_label, 0, 0)
+        
+        # start end time button layout
+        set_start_end_time_hbox = QtGui.QHBoxLayout()
+        camera_groupbox_gridlayout.addLayout(set_start_end_time_hbox, 0, 1)
+        
         # set start time
         self.set_start_time_button = QtGui.QPushButton('|<')
-        add_remove_cam_hbox.addWidget(self.set_start_time_button)
+        self.set_start_time_button.setFixedWidth(60)
+        set_start_end_time_hbox.addWidget(self.set_start_time_button)
         self.set_start_time_button.clicked.connect(self.set_time_button_clicked)
         
+        set_start_end_time_hbox.addStretch()
         # set start time
         self.set_end_time_button = QtGui.QPushButton('>|')
-        add_remove_cam_hbox.addWidget(self.set_end_time_button)
+        self.set_end_time_button.setFixedWidth(60)
+        set_start_end_time_hbox.addWidget(self.set_end_time_button)
         self.set_end_time_button.clicked.connect(self.set_time_button_clicked)
         
+
         # look through camera
         look_through_button = QtGui.QPushButton('Look through camera')
-        add_remove_cam_hbox.addWidget(look_through_button)
+        camera_groupbox_gridlayout.addWidget(look_through_button, 1, 1)
         look_through_button.clicked.connect(self.look_through_button_click)
+
+        
+        # -----------------------------------------------------------------------
+        #
+        # Output
+        #
+        # -----------------------------------------------------------------------
+        
+        
+        # camera group box
+        output_groupbox = QtGui.QGroupBox("Output")
+        self.content_layout.addWidget(output_groupbox)
+        output_groupbox_vbox = QtGui.QVBoxLayout()
+        output_groupbox.setLayout(output_groupbox_vbox)
         
         
         
-        
-        
-        
+        # resolution
         self.resolution_dict = {'1920 x 1080':(1920, 1080),
                                 '1280 x 720':(1280, 720),
                                 '960 x 540':(960, 540)}
@@ -160,8 +207,7 @@ class PlayblastWidget(QtGui.QWidget):
         resolution_keys = self.resolution_dict.keys()
         resolution_keys.sort()
         
-        # resolution
-        self.resolution_combobox = simple_widget.labeled_combobox(label='Resolution', parent_layout=self.content_layout, items=resolution_keys)
+        self.resolution_combobox = simple_widget.labeled_combobox(label='Resolution', parent_layout=output_groupbox_vbox, items=resolution_keys)
         
         
         # do it
@@ -332,8 +378,8 @@ class PlayblastWidget(QtGui.QWidget):
             return
             
         
-        start_time = self.model.item(current_row, 2).text()
-        end_time = self.model.item(current_row, 3).text() 
+        start_time = int(self.model.item(current_row, 2).text())
+        end_time = int(self.model.item(current_row, 3).text())
 
         mel.eval('lookThroughModelPanel {0} modelPanel4'.format(current_camera))
         
@@ -468,6 +514,7 @@ class PlayblastWidget(QtGui.QWidget):
 def show():
     win = PlayblastWidget(parent=maya_main_window())
     win.show()
+
 '''
 try:
     win.close()
