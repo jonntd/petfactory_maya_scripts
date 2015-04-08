@@ -32,7 +32,7 @@ def do_playblast(current_camera, file_name, start_time, end_time, dir_path, widt
     mel.eval('lookThroughModelPanel {0} modelPanel4'.format(current_camera)) 
     
     # do the playblast 
-    pm.playblast(startTime=start_time, endTime=end_time, format="avfoundation", viewer=False, compression="H.264", widthHeight=(width,height), showOrnaments=True, filename='{0}/{1}'.format(dir_path, current_camera), offScreen=True)
+    pm.playblast(startTime=start_time, endTime=end_time, format="avfoundation", viewer=False, compression="H.264", widthHeight=(width,height), showOrnaments=True, filename='{0}/{1}'.format(dir_path, file_name), offScreen=True)
     
     print('Playblast created in directory:\n{0}'.format(dir_path))
 

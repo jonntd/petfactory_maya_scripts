@@ -255,8 +255,6 @@ class PlayblastWidget(QtGui.QWidget):
     
     def build_info_dict(self):
         
-        # get the camera info form the table view
-        root = self.model.invisibleRootItem()
         num_children = self.model.rowCount()
         
         if num_children < 1:
@@ -268,43 +266,40 @@ class PlayblastWidget(QtGui.QWidget):
         playblast_dict['clips'] = clip_list
 
         
-        for i in range(num_children):
+        for row in range(num_children):
 
-            child = root.child(i)
+            camera_item = self.model.item(row, 0)
             
-            if child.checkState():
+            if camera_item.checkState():
                 
-                info_dict = {}
-                clip_list.append(info_dict)
-
-                row = child.row()
-                
-                cam_name = child.text()
-                camera = pet_verify.to_pynode(cam_name)
+                camera_name = camera_item.text()
+                camera_node = pet_verify.to_pynode(camera_name)
                                     
-                if camera is None:
+                if camera_node is None:
                     pm.warning('Not a valid camera, skipping')
                     continue
                 
-                notes = self.model.item(row, 1)
                 
-                start_time = self.model.item(row, 2)
+                start_time_item = self.model.item(row, 2)    
+                end_time_item = self.model.item(row, 3)
                 
-                if start_time is None:
-                    pm.warning('No start time specified, skipping')
+                start_time_text = start_time_item.text()
+                end_time_text = end_time_item.text()
+                
+                if int(start_time_text) > int(end_time_text):
+                    pm.warning('The start time cannot be greater than the end time!, skipping')
                     continue
-                    
-                end_time = self.model.item(row, 3)
+            
+                notes_item = self.model.item(row, 1)
+ 
+                # add the dict
+                info_dict = {}
+                clip_list.append(info_dict)
                 
-                if end_time is None:
-                    pm.warning('No end time specified, skipping')
-                    continue
-                    
-                
-                info_dict['camera'] = camera.shortName()
-                info_dict['start_time'] = start_time.text()
-                info_dict['end_time'] = end_time.text()
-                info_dict['notes'] = notes.text() 
+                info_dict['camera'] = camera_node.shortName()
+                info_dict['start_time'] = start_time_text
+                info_dict['end_time'] = end_time_text
+                info_dict['notes'] = notes_item.text() 
                 
                 
         width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
@@ -326,12 +321,9 @@ class PlayblastWidget(QtGui.QWidget):
             self.output_dir = None
             return
         
-        
-        print(self.output_dir)
-            
+     
         playblast_dict = self.build_info_dict()         
-        #pprint.pprint(playblast_dict)
-        
+ 
         if playblast_dict is None:
             return
 
@@ -348,6 +340,7 @@ class PlayblastWidget(QtGui.QWidget):
         for clip_info in clip_info_list:
             
             cam = clip_info.get('camera')
+            notes = clip_info.get('notes')
             start_time = clip_info.get('start_time')
             end_time = clip_info.get('end_time')
             
@@ -355,12 +348,24 @@ class PlayblastWidget(QtGui.QWidget):
             
                 
             playblast_creator.do_playblast( current_camera=cam_node,
-                                            file_name='{0}_clip'.format(cam),
+                                            file_name='{0}_{1}'.format(cam, notes),
                                             start_time=start_time,
                                             end_time=end_time,
                                             dir_path=dir_path,
                                             width=width,
                                             height=height)
+                                            
+                                            
+                                            
+        # save json
+        json_data = json.dumps(playblast_dict, indent=4)
+        json_path = os.path.join(dir_path, 'playblast.json')
+        
+        with open(json_path, 'w') as f:
+            f = open(json_path,'w')
+            f.write(json_data)
+            f.close()
+
     
     def look_through_button_click(self):
         
