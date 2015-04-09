@@ -15,6 +15,8 @@ reload(stretchy_ik)
 import petfactory.rigging.skinning.curve_skinweight as curve_skinweight
 reload(curve_skinweight)
 
+import petfactory.rigging.joints.create_joints as create_joints
+reload(create_joints)
 
 '''
 TODO
@@ -46,120 +48,8 @@ def validate_cv_num(num_joints, cv_num):
     gt = find_gt(valid_cv_num, cv_num)
     
     pm.warning("Invalid number of cv's. Current cv num is {0}. Remove {1} cv(s) or add {2} cv(s)".format(cv_num, cv_num-lt, gt-cv_num))
-    
-    
-def create_joints_on_axis(num_joints=10, parent_joints=False, show_lra=True, name='joint', spacing=1, axis=0):
-    
-    jnt_list = []
-    for index in range(num_joints):
-        
-        jnt = pm.createNode('joint', name='{0}_{1}_jnt'.format(name, index), ss=True)
-        pos = (spacing*index, 0, 0)
-        jnt.translate.set(pos)
-        jnt_list.append(jnt)
-        
-        if show_lra:
-            pm.toggle(jnt, localAxis=True)
-            
-    
-    if parent_joints:
-        parent_joint_list(jnt_list)
-    
-    return jnt_list
-    
-def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lra=True, name='joint', start_offset=0, end_offset=0, joint_u_list=None):
-    
 
-    if joint_u_list is not None:
-        
-        if len(joint_u_list) != num_joints-1:
-            pm.warning('The length of the joint_u_list must be {}'.format(num_joints-1))
-            return
-            
-        u_sum = float(sum(joint_u_list))
-        print(u_sum)
-        
-        length_inc_list = []
-        length_inc = 0
-        for n in range(num_joints):
-            if n > 0:
-                length_inc += joint_u_list[n-1]/u_sum
-            length_inc_list.append(length_inc)
-                    
-    else:
-        
-        length_inc = 1.0 / (num_joints-1)
-        length_inc_list = []
-        for n in range(num_joints):
-            length_inc_list.append(length_inc*n)
-    
-    print(length_inc_list)
-    
-    crv_shape = crv.getShape()
-    crv_length = crv_shape.length()
-    length = crv_length * (1.0-start_offset-end_offset)
-    start_length_offset = crv_length * start_offset
-    
-    
-          
-    crv_matrix = crv.getMatrix(worldSpace=True) 
-    up_vec = pm.datatypes.Vector(crv_matrix[up_axis][0], crv_matrix[up_axis][1], crv_matrix[up_axis][2])
-    up_vec.normalize()
-    
-    
-    jnt_list = []
-    for index in range(num_joints):
-        
-        print(length_inc_list[index])
-        
-        #u = crv_shape.findParamFromLength(length_inc_list[index]*index+start_length_offset)
-        u = crv_shape.findParamFromLength(length_inc_list[index]*length+start_length_offset)
-        #u = crv_shape.findParamFromLength(length_inc*index+start_length_offset)
-        p = crv_shape.getPointAtParam(u, space='world')
-        jnt = pm.createNode('joint', name='{0}_{1}_jnt'.format(name, index), ss=True)
-        jnt.translate.set(p)
-        jnt_list.append(jnt)
-        
-        if index > 0:
-            
-            prev_jnt = jnt_list[index-1].getTranslation(space='world')
-            curr_jnt = jnt_list[index].getTranslation(space='world')
-            
-            aim_vec = (curr_jnt - prev_jnt).normal()  
-            
-            if aim_vec.isParallel(up_vec, tol=0.1):
-                pm.warning('up_vec is to close to the aim vec')
-            
-            # build a transform matrix from aim and up
-            tm = pet_vector.remap_aim_up(aim_vec, up_vec, aim_axis=0, up_axis=2, invert_aim=False, invert_up=False, pos=prev_jnt)
-            
-            pm_rot = tm.getRotation()
-            r_deg = pm.util.degrees((pm_rot[0], pm_rot[1], pm_rot[2]))
-                                    
-            if index is num_joints-1:
-                jnt_list[index-1].jointOrient.set(r_deg)
-                jnt_list[index].jointOrient.set(r_deg)
-    
-            else:
-                jnt_list[index-1].jointOrient.set(r_deg)
-                
-                
-        if show_lra:
-            pm.toggle(jnt, localAxis=True)
-                
-                
-    if parent_joints:
-        parent_joint_list(jnt_list)
-    
-    return jnt_list
-            
-            
-def parent_joint_list(joint_list):         
-    for index, jnt in enumerate(joint_list):
-        if index > 0:
-            pm.parent(joint_list[index], joint_list[index-1])
-    pm.select(deselect=True)
-    
+
 
 def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None, joint_u_list=None):
         
@@ -209,7 +99,7 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     no_inherit_trans_grp.inheritsTransform.set(0)
 
     # create the ik joints
-    ik_jnt_list = create_joints_on_curve(crv=crv, num_joints=num_joints, up_axis=2, parent_joints=True, show_lra=True, name='{0}_base_ik'.format(name), joint_u_list=joint_u_list)
+    ik_jnt_list = create_joints.create_joints_on_curve(crv=crv, num_joints=num_joints, up_axis=2, parent_joints=True, show_lra=True, name='{0}_base_ik'.format(name), joint_u_list=joint_u_list)
     
     # calculate the start and end t matrix
     start_matrix = matrix_from_u(crv=crv, start_u=0, end_u=.05, pos_u=0, up_vec=up_vec)
@@ -510,7 +400,7 @@ def add_cable_bind_joints(crv, name, num_ik_joints, num_bind_joints, cable_radiu
     
     
     # build the cable joints
-    joint_list = create_joints_on_axis(num_joints=num_bind_joints, show_lra=show_lra, spacing=cubic_length_inc)
+    joint_list = create_joints.create_joints_on_axis(num_joints=num_bind_joints, show_lra=show_lra, spacing=cubic_length_inc)
         
     # create the mesh
     cable_mesh = mesh_from_start_end(start_joint=joint_list[0], end_joint=joint_list[-1], length_divisions=(num_bind_joints*2)-1, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, name='{0}_mesh'.format(name))
@@ -686,7 +576,7 @@ def setup_crv_list( crv_list,
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple_nhair.mb', f=True)
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_single_nhair.mb', f=True)
 
-
+'''
 crv_1 = pm.PyNode('curve1')
 #crv_2 = pm.PyNode('curve2')
 #crv_3 = pm.PyNode('curve3')
@@ -698,7 +588,7 @@ rig_name = 'cable_rig_name'
 name_start_index = 0
 num_ik_joints = 4
 num_bind_joints = 20
-cable_radius = 1.5
+cable_radius = 1.3
 cable_axis_divisions = 12
 
 
@@ -732,7 +622,7 @@ setup_crv_list( crv_list,
                 existing_hairsystem,
                 joint_u_list)
 
-
+'''
 #cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None):
 #cable_base_ik(crv=crv_1, num_joints=num_ik_joints, name='curve_rig', up_axis=2, existing_hairsystem=existing_hairsystem)
 #cable_base_ik(crv=crv_1, num_joints=6, name='curve_rig', up_axis=2, existing_hairsystem=None)
