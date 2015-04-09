@@ -21,10 +21,22 @@ def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
     
-'''
-TODO
+class MySpinboxDelegate(QtGui.QItemDelegate):
+    
+    def __init__(self, parent=None):
+        super(MySpinboxDelegate, self).__init__(parent)
+        
+    def createEditor(self, parent, option, index):
+        
+        row = index.row()
+        
+        spinbox = QtGui.QDoubleSpinBox(parent)
+        spinbox.setRange(0, 1.0)
+        spinbox.setSingleStep(.01)
+        spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        
+        return spinbox
 
-'''   
 class CableSetupWidget(QtGui.QWidget):
  
     def __init__(self, parent=None):
@@ -122,6 +134,8 @@ class CableSetupWidget(QtGui.QWidget):
         self.cable_radius_spinbox = simple_widget.add_spinbox(label='Cable radius', parent_layout=rig_group_vert_layout, min=.1, max=999, default=1, double_spinbox=True)
         self.cable_axis_divisions_spinbox = simple_widget.add_spinbox(label='Cable axis divisions', parent_layout=rig_group_vert_layout, min=3, max=99, default=12)
         self.cable_ik_joints_spinbox = simple_widget.add_spinbox(label='Cable IK joints', parent_layout=rig_group_vert_layout, min=3, max=10, default=4)
+        self.cable_ik_joints_spinbox.valueChanged.connect(self.number_of_joints_changed)
+        
         self.cable_bind_joints_spinbox = simple_widget.add_spinbox(label='Cable bind joints', parent_layout=rig_group_vert_layout, min=3, max=99, default=10)
 
         
@@ -215,15 +229,55 @@ class CableSetupWidget(QtGui.QWidget):
         preview_joints_button = QtGui.QPushButton('Preview joints ui')
         preview_joints_button.clicked.connect(self.preview_joints_button_clicked)
         custom_joint_spacing_groupbox_vbox.addWidget(preview_joints_button)
-        
+
+        # model
+        self.joint_spacing_model = QtGui.QStandardItemModel()
+        self.joint_spacing_model.setHorizontalHeaderLabels(['joint u parameter'])
+       
+        # tableview 
         self.joint_spacing_tableview = QtGui.QTableView()
         custom_joint_spacing_groupbox_vbox.addWidget(self.joint_spacing_tableview)
+        self.joint_spacing_tableview.setAlternatingRowColors(True)
+        self.joint_spacing_tableview.setModel(self.joint_spacing_model)   
+        h_header = self.joint_spacing_tableview.horizontalHeader()
+        h_header.setResizeMode(QtGui.QHeaderView.Stretch)
+        self.joint_spacing_tableview.setItemDelegate(MySpinboxDelegate(self.joint_spacing_tableview))
+        
+        self.update_data_model(self.cable_ik_joints_spinbox.value())
+        
         refresh_joint_spacing_button = QtGui.QPushButton('Refresh joint spacing')
         refresh_joint_spacing_button.clicked.connect(self.refresh_joint_spacing_button_clicked)
         custom_joint_spacing_groupbox_vbox.addWidget(refresh_joint_spacing_button)
                 
         #tab_2_vertical_layout.addStretch()
     
+    def update_data_model(self, num_ik_joints):
+        
+        # clear the model
+        self.joint_spacing_model.removeRows(0, self.joint_spacing_model.rowCount())
+        
+        num_bones = num_ik_joints-1
+        if num_bones == 0:
+            num_bones = 1
+            
+        inc = 1.0 / num_bones
+        
+        for row in range(num_ik_joints):
+            
+            if num_ik_joints > 1:
+                    val = str(inc*row)
+            else:
+                val = '0.5'
+                    
+            item = QtGui.QStandardItem(val)
+            
+            self.joint_spacing_model.setItem(row, 0, item)
+
+   
+    def number_of_joints_changed(self):        
+        self.update_data_model(self.sender().value())
+                
+           
     def refresh_joint_spacing_button_clicked(self):
         
         if self.preview_joint_spacing_ui is None:
@@ -362,6 +416,18 @@ class CableSetupWidget(QtGui.QWidget):
         follicle_set_unicode = self.follicle_set_lineedit.text()
         use_existing_sets = self.sets_group_box.isChecked()
         
+        
+        if self.custom_joint_spacing_groupbox.isChecked():
+               
+            num_joint_spacing_rows = self.joint_spacing_model.rowCount()    
+            joint_u_list = []
+            for row in range(num_joint_spacing_rows):
+                joint_u_list.append(float(self.joint_spacing_model.item(row, 0).text()))
+                
+        else:
+            joint_u_list = None
+
+        
         if rig_name == '':
             rig_name = 'cable_rig'
 
@@ -383,8 +449,10 @@ class CableSetupWidget(QtGui.QWidget):
             
         else:
             mesh_set = start_ctrl_set = end_ctrl_set = follicle_set = None
-                                    
-                        
+            
+        
+        
+       
         kwargs = {  'crv_list':crv_list,
                     'rig_name':rig_name,
                     'name_start_index':name_start_index,
@@ -398,10 +466,11 @@ class CableSetupWidget(QtGui.QWidget):
                     'follicle_set':follicle_set,
                     'use_existing_hairsystem':use_existing_hairsystem,
                     'share_hairsystem':share_hairsystem,
-                    'existing_hairsystem':existing_hairsystem
+                    'existing_hairsystem':existing_hairsystem,
+                    'joint_u_list':joint_u_list
                     }
         
-        #pprint.pprint(kwargs)        
+        #pprint.pprint(kwargs)
         cable_setup.setup_crv_list(**kwargs)
 
 
