@@ -179,9 +179,14 @@ class CreateCurveJointsWidget(QtGui.QWidget):
         
         # delete joint list
         if self.result_joints is not None:
-            pm.delete(self.result_joints)
-            self.result_joints = None
             
+            try:
+                pm.delete(self.result_joints)
+                
+            except pm.general.MayaNodeError as e:
+                pm.warning(e)
+                
+            self.result_joints = None
             
             
         curve_unicoide = self.curve_lineedit.text()

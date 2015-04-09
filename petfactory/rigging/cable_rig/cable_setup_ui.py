@@ -35,7 +35,10 @@ class CableSetupWidget(QtGui.QWidget):
         self.resize(300,100)
         self.setWindowTitle("Cable Setup")
 
- 
+        
+        self.preview_joint_spacing_ui = None
+        
+        
         # layout
         vertical_layout = QtGui.QVBoxLayout()
         self.setLayout(vertical_layout)
@@ -198,17 +201,52 @@ class CableSetupWidget(QtGui.QWidget):
         self.start_ctrl_set_lineedit = simple_widget.add_populate_lineedit(label='Start ctrl >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
         self.end_ctrl_set_lineedit = simple_widget.add_populate_lineedit(label='End ctrl   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
         self.follicle_set_lineedit = simple_widget.add_populate_lineedit(label='Follicle   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
-          
+         
+        # custom joint spacing group box
+        self.custom_joint_spacing_groupbox = QtGui.QGroupBox("Custom joint spacing")
+        self.custom_joint_spacing_groupbox.setCheckable(True)
+        self.custom_joint_spacing_groupbox.setChecked(False)
+        tab_2_vertical_layout.addWidget(self.custom_joint_spacing_groupbox)
+        custom_joint_spacing_groupbox_vbox = QtGui.QVBoxLayout()
+        self.custom_joint_spacing_groupbox.setLayout(custom_joint_spacing_groupbox_vbox)
+        
+        
         # preview joints
         preview_joints_button = QtGui.QPushButton('Preview joints ui')
         preview_joints_button.clicked.connect(self.preview_joints_button_clicked)
-        tab_2_vertical_layout.addWidget(preview_joints_button)
+        custom_joint_spacing_groupbox_vbox.addWidget(preview_joints_button)
+        
+        self.joint_spacing_tableview = QtGui.QTableView()
+        custom_joint_spacing_groupbox_vbox.addWidget(self.joint_spacing_tableview)
+        refresh_joint_spacing_button = QtGui.QPushButton('Refresh joint spacing')
+        refresh_joint_spacing_button.clicked.connect(self.refresh_joint_spacing_button_clicked)
+        custom_joint_spacing_groupbox_vbox.addWidget(refresh_joint_spacing_button)
                 
-        tab_2_vertical_layout.addStretch()
+        #tab_2_vertical_layout.addStretch()
+    
+    def refresh_joint_spacing_button_clicked(self):
+        
+        if self.preview_joint_spacing_ui is None:
+            pm.warning('Please open the Preview joints ui')
+            
+        else:
+            #print(self.preview_joint_spacing_ui)
+            num_preview_joints = self.preview_joint_spacing_ui.number_of_joints_spinbox.value()
+            num_ik_joints = self.cable_ik_joints_spinbox.value()
+            
+            if num_preview_joints != num_ik_joints:
+                pm.warning('Number of joints do not match, pleas use {0} preview joints'.format(num_ik_joints))
+                return
+                
+            print(num_preview_joints)
     
     def preview_joints_button_clicked(self):
         
-        create_curve_joints_ui.show()
+        if self.preview_joint_spacing_ui is None:
+            self.preview_joint_spacing_ui = create_curve_joints_ui.show()
+            
+        else:
+            self.preview_joint_spacing_ui.show()
         
     def populate_lineedit(self, **kwargs):
         
@@ -374,7 +412,7 @@ def show():
     
 
 
-'''
+
 try:
     win.close()
     
@@ -383,7 +421,6 @@ except NameError:
 
 win = show()
 win.move(100,150)
-'''
 
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple.mb', f=True)
 
