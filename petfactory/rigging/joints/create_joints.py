@@ -24,15 +24,16 @@ def create_joints_on_axis(num_joints=10, parent_joints=False, show_lra=True, nam
     
 def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lra=True, name='joint', start_offset=0, end_offset=0, joint_u_list=None):
     
-
+    # we got a joint_u_list 
     if joint_u_list is not None:
         
-        if len(joint_u_list) != num_joints-1:
-            pm.warning('The length of the joint_u_list must be {}'.format(num_joints-1))
+        if len(joint_u_list) != num_joints:
+            pm.warning('The length of the joint_u_list must be {}'.format(num_joints))
             return
-            
+        
+        ''' 
         u_sum = float(sum(joint_u_list))
-        print(u_sum)
+        #print(u_sum)
         
         length_inc_list = []
         length_inc = 0
@@ -40,15 +41,18 @@ def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lr
             if n > 0:
                 length_inc += joint_u_list[n-1]/u_sum
             length_inc_list.append(length_inc)
-                    
+        '''
+    
+    
+    # no joint_u_list were provided, calculate even spacing
     else:
         
         length_inc = 1.0 / (num_joints-1)
-        length_inc_list = []
+        joint_u_list = []
         for n in range(num_joints):
-            length_inc_list.append(length_inc*n)
+            joint_u_list.append(length_inc*n)
     
-    print(length_inc_list)
+    print(joint_u_list)
     
     crv_shape = crv.getShape()
     crv_length = crv_shape.length()
@@ -65,10 +69,10 @@ def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lr
     jnt_list = []
     for index in range(num_joints):
         
-        print(length_inc_list[index])
+        #print(joint_u_list[index])
         
         #u = crv_shape.findParamFromLength(length_inc_list[index]*index+start_length_offset)
-        u = crv_shape.findParamFromLength(length_inc_list[index]*length+start_length_offset)
+        u = crv_shape.findParamFromLength(joint_u_list[index]*length+start_length_offset)
         #u = crv_shape.findParamFromLength(length_inc*index+start_length_offset)
         p = crv_shape.getPointAtParam(u, space='world')
         jnt = pm.createNode('joint', name='{0}_{1}_jnt'.format(name, index), ss=True)
@@ -115,3 +119,19 @@ def parent_joint_list(joint_list):
             pm.parent(joint_list[index], joint_list[index-1])
     pm.select(deselect=True)
     
+
+
+'''
+curve_node = pm.PyNode('curve1')
+joint_u_list = [0, .25, .5, 1.0]
+
+create_joints_on_curve( crv=curve_node,
+                        num_joints=4,
+                        up_axis=2,
+                        parent_joints=True,
+                        show_lra=True,
+                        name='joint',
+                        start_offset=0,
+                        end_offset=0,
+                        joint_u_list=joint_u_list)
+'''
