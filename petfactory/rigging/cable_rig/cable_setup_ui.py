@@ -31,6 +31,7 @@ class MySpinboxDelegate(QtGui.QItemDelegate):
         row = index.row()
         
         spinbox = QtGui.QDoubleSpinBox(parent)
+        spinbox.setDecimals(4)
         spinbox.setRange(0, 1.0)
         spinbox.setSingleStep(.01)
         spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
@@ -202,6 +203,7 @@ class CableSetupWidget(QtGui.QWidget):
         
         
         # extra (tab 2)
+        
         # rig group box
         self.sets_group_box = QtGui.QGroupBox("Use existing Sets")
         self.sets_group_box.setCheckable(True)
@@ -265,9 +267,9 @@ class CableSetupWidget(QtGui.QWidget):
         for row in range(num_ik_joints):
             
             if num_ik_joints > 1:
-                    val = str(inc*row)
+                    val = '{:.4f}'.format(inc*row)
             else:
-                val = '0.5'
+                val = '{:.4f}'.format(.5)
                     
             item = QtGui.QStandardItem(val)
             
@@ -284,7 +286,6 @@ class CableSetupWidget(QtGui.QWidget):
             pm.warning('Please open the Preview joints ui')
             
         else:
-            #print(self.preview_joint_spacing_ui)
             num_preview_joints = self.preview_joint_spacing_ui.number_of_joints_spinbox.value()
             num_ik_joints = self.cable_ik_joints_spinbox.value()
             
@@ -292,7 +293,14 @@ class CableSetupWidget(QtGui.QWidget):
                 pm.warning('Number of joints do not match, pleas use {0} preview joints'.format(num_ik_joints))
                 return
                 
-            print(num_preview_joints)
+            # get the data
+            num_rows = self.preview_joint_spacing_ui.model.rowCount()
+            
+            for row in range(num_rows):
+                val = self.preview_joint_spacing_ui.model.item(row, 0).text()
+                self.joint_spacing_model.item(row, 0).setText(val)
+            
+                            
     
     def preview_joints_button_clicked(self):
         
@@ -478,10 +486,9 @@ def show():
     win = CableSetupWidget(parent=maya_main_window())
     win.show()
     return win
-    
 
 
-
+'''
 try:
     win.close()
     
@@ -490,7 +497,7 @@ except NameError:
 
 win = show()
 win.move(100,150)
-
+'''
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple.mb', f=True)
 
 #pm.select(pm.PyNode('curve1'), pm.PyNode('curve2'), pm.PyNode('curve3'))

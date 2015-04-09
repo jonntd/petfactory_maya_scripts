@@ -34,6 +34,7 @@ class MySpinboxDelegate(QtGui.QItemDelegate):
             spinbox = QtGui.QDoubleSpinBox(parent)
             spinbox.setRange(0, 1.0)
             spinbox.setSingleStep(.01)
+            spinbox.setDecimals(4)
             spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
             
             spinbox.valueChanged.connect(partial(self.my_widget.tableview_spinbox_delegate_changed, row))
@@ -137,9 +138,9 @@ class CreateCurveJointsWidget(QtGui.QWidget):
         for row in range(num_joints):
             
             if num_joints > 1:
-                    val = str(inc*row)
+                    val = '{:.4f}'.format(inc*row)
             else:
-                val = '0.5'
+                val = '{:.4f}'.format(.5)
                     
             item = QtGui.QStandardItem(val)
             
