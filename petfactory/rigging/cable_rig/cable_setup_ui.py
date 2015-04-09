@@ -14,6 +14,9 @@ reload(pet_verify)
 import petfactory.rigging.cable_rig.cable_setup as cable_setup
 reload(cable_setup)
 
+import petfactory.rigging.joints.create_curve_joints_ui as create_curve_joints_ui
+reload(create_curve_joints_ui)
+
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
@@ -196,8 +199,16 @@ class CableSetupWidget(QtGui.QWidget):
         self.end_ctrl_set_lineedit = simple_widget.add_populate_lineedit(label='End ctrl   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
         self.follicle_set_lineedit = simple_widget.add_populate_lineedit(label='Follicle   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
           
-        tab_2_vertical_layout.addStretch()
+        # preview joints
+        preview_joints_button = QtGui.QPushButton('Preview joints ui')
+        preview_joints_button.clicked.connect(self.preview_joints_button_clicked)
+        tab_2_vertical_layout.addWidget(preview_joints_button)
                 
+        tab_2_vertical_layout.addStretch()
+    
+    def preview_joints_button_clicked(self):
+        
+        create_curve_joints_ui.show()
         
     def populate_lineedit(self, **kwargs):
         
@@ -359,6 +370,7 @@ class CableSetupWidget(QtGui.QWidget):
 def show():      
     win = CableSetupWidget(parent=maya_main_window())
     win.show()
+    return win
     
 
 
@@ -367,15 +379,11 @@ try:
     win.close()
     
 except NameError:
-    print('No win to close')
+    pass
 
-win = CableSetupWidget(parent=maya_main_window())
-win.show()
-
-
+win = show()
 win.move(100,150)
 '''
-
 
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple.mb', f=True)
 
