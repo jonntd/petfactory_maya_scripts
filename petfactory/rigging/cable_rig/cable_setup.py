@@ -67,15 +67,41 @@ def create_joints_on_axis(num_joints=10, parent_joints=False, show_lra=True, nam
     
     return jnt_list
     
-def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lra=True, name='joint', start_offset=0, end_offset=0):
+def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lra=True, name='joint', start_offset=0, end_offset=0, joint_u_list=None):
+    
+
+    if joint_u_list is not None:
+        
+        if len(joint_u_list) != num_joints-1:
+            pm.warning('The length of the joint_u_list must be {}'.format(num_joints-1))
+            return
+            
+        u_sum = float(sum(joint_u_list))
+        print(u_sum)
+        
+        length_inc_list = []
+        length_inc = 0
+        for n in range(num_joints):
+            if n > 0:
+                length_inc += joint_u_list[n-1]/u_sum
+            length_inc_list.append(length_inc)
+                    
+    else:
+        
+        length_inc = 1.0 / (num_joints-1)
+        length_inc_list = []
+        for n in range(num_joints):
+            length_inc_list.append(length_inc*n)
+    
+    print(length_inc_list)
     
     crv_shape = crv.getShape()
     crv_length = crv_shape.length()
-    
     length = crv_length * (1.0-start_offset-end_offset)
-    length_inc = length / (num_joints-1)
     start_length_offset = crv_length * start_offset
     
+    
+          
     crv_matrix = crv.getMatrix(worldSpace=True) 
     up_vec = pm.datatypes.Vector(crv_matrix[up_axis][0], crv_matrix[up_axis][1], crv_matrix[up_axis][2])
     up_vec.normalize()
@@ -84,7 +110,11 @@ def create_joints_on_curve(crv, num_joints, up_axis, parent_joints=True, show_lr
     jnt_list = []
     for index in range(num_joints):
         
-        u = crv_shape.findParamFromLength(length_inc*index+start_length_offset)
+        print(length_inc_list[index])
+        
+        #u = crv_shape.findParamFromLength(length_inc_list[index]*index+start_length_offset)
+        u = crv_shape.findParamFromLength(length_inc_list[index]*length+start_length_offset)
+        #u = crv_shape.findParamFromLength(length_inc*index+start_length_offset)
         p = crv_shape.getPointAtParam(u, space='world')
         jnt = pm.createNode('joint', name='{0}_{1}_jnt'.format(name, index), ss=True)
         jnt.translate.set(p)
@@ -131,7 +161,7 @@ def parent_joint_list(joint_list):
     pm.select(deselect=True)
     
 
-def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None):
+def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None, joint_u_list=None):
         
     crv_shape = crv.getShape()
     num_cvs = crv_shape.numCVs()
@@ -179,7 +209,7 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     no_inherit_trans_grp.inheritsTransform.set(0)
 
     # create the ik joints
-    ik_jnt_list = create_joints_on_curve(crv=crv, num_joints=num_joints, up_axis=2, parent_joints=True, show_lra=True, name='{0}_base_ik'.format(name))
+    ik_jnt_list = create_joints_on_curve(crv=crv, num_joints=num_joints, up_axis=2, parent_joints=True, show_lra=True, name='{0}_base_ik'.format(name), joint_u_list=joint_u_list)
     
     # calculate the start and end t matrix
     start_matrix = matrix_from_u(crv=crv, start_u=0, end_u=.05, pos_u=0, up_vec=up_vec)
@@ -431,14 +461,14 @@ def ctrl_joint_position_blend(ctrl, ctrl_local_position, point_on_crv_info, attr
     
     return blend_col
     
-def add_cable_bind_joints(crv, name, num_ik_joints, num_bind_joints, cable_radius, cable_axis_divisions, existing_hairsystem=None, create_mesh_copy=False, show_lra=False):
+def add_cable_bind_joints(crv, name, num_ik_joints, num_bind_joints, cable_radius, cable_axis_divisions, existing_hairsystem=None, create_mesh_copy=False, show_lra=False, joint_u_list=None):
     
     ret_dict = {}
     
     blender_attr_name_list = ['blendJoint1', 'blendJoint2', 'blendJoint3']
     blender_value_list = [.7, .4, .1]
         
-    cable_base_dict = cable_base_ik(crv=crv, num_joints=num_ik_joints, name=name, existing_hairsystem=existing_hairsystem)
+    cable_base_dict = cable_base_ik(crv=crv, num_joints=num_ik_joints, name=name, existing_hairsystem=existing_hairsystem, joint_u_list=joint_u_list)
     
     if cable_base_dict is None:
         return None
@@ -586,8 +616,9 @@ def setup_crv_list( crv_list,
                     end_ctrl_set = None,
                     use_existing_hairsystem = False,
                     share_hairsystem = True,
-                    existing_hairsystem = None
-                    ):
+                    existing_hairsystem = None,
+                    joint_u_list=None):
+                        
     
     # deselect while creating the sets    
     pm.select(deselect=True)
@@ -610,10 +641,10 @@ def setup_crv_list( crv_list,
         if use_existing_hairsystem:
             
             if index is 0:
-                cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem, create_mesh_copy=True)
+                cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem, create_mesh_copy=True, joint_u_list=joint_u_list)
                 
             else:
-                cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem)
+                cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem, joint_u_list=joint_u_list)
             
             
             
@@ -624,20 +655,20 @@ def setup_crv_list( crv_list,
             if share_hairsystem:
                 
                 if index is 0:
-                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, create_mesh_copy=True)
+                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, create_mesh_copy=True, joint_u_list=joint_u_list)
                     existing_hairsystem = cable_dict.get('hairsystem')
                     
                 else:
-                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem)
+                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, existing_hairsystem=existing_hairsystem, joint_u_list=joint_u_list)
                     
                     
             # create a new hs for each rig
             else:
                 if index is 0:
-                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, create_mesh_copy=True)
+                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, create_mesh_copy=True, joint_u_list=joint_u_list)
                 
                 else:
-                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions)
+                    cable_dict = add_cable_bind_joints(crv=crv, name='{0}_{1}'.format(rig_name, index+name_start_index), num_ik_joints=num_ik_joints, num_bind_joints=num_bind_joints, cable_radius=cable_radius, cable_axis_divisions=cable_axis_divisions, joint_u_list=joint_u_list)
                     
 
         # add to sets
@@ -655,19 +686,19 @@ def setup_crv_list( crv_list,
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple_nhair.mb', f=True)
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_single_nhair.mb', f=True)
 
-'''
+
 crv_1 = pm.PyNode('curve1')
-crv_2 = pm.PyNode('curve2')
-crv_3 = pm.PyNode('curve3')
-crv_list = [crv_1, crv_2, crv_3]
-#crv_list = [crv_1]
+#crv_2 = pm.PyNode('curve2')
+#crv_3 = pm.PyNode('curve3')
+#crv_list = [crv_1, crv_2, crv_3]
+crv_list = [crv_1]
 
 
 rig_name = 'cable_rig_name'
 name_start_index = 0
 num_ik_joints = 4
 num_bind_joints = 20
-cable_radius = .5
+cable_radius = 1.5
 cable_axis_divisions = 12
 
 
@@ -676,10 +707,14 @@ follicle_set = None
 start_ctrl_set = None
 end_ctrl_set = None
 
-use_existing_hairsystem = True
+use_existing_hairsystem = False
 share_hairsystem = True
-#existing_hairsystem = None
-existing_hairsystem = pm.PyNode('hairSystem1')
+existing_hairsystem = None
+
+joint_u_list=(3,3,1.8)
+#joint_u_list = None
+
+#existing_hairsystem = pm.PyNode('hairSystem1')
 
 setup_crv_list( crv_list,
                 rig_name,
@@ -694,11 +729,14 @@ setup_crv_list( crv_list,
                 end_ctrl_set,
                 use_existing_hairsystem,
                 share_hairsystem,
-                existing_hairsystem)
-'''
+                existing_hairsystem,
+                joint_u_list)
+
 
 #cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None):
 #cable_base_ik(crv=crv_1, num_joints=num_ik_joints, name='curve_rig', up_axis=2, existing_hairsystem=existing_hairsystem)
 #cable_base_ik(crv=crv_1, num_joints=6, name='curve_rig', up_axis=2, existing_hairsystem=None)
 #pm.delete(crv_list)
-#create_joints_on_curve(crv=crv_1, num_joints=6, up_axis=2, parent_joints=True, show_lra=True, name='test_jnt')
+
+#crv_1 = pm.PyNode('curve1')
+#create_joints_on_curve(crv=crv_1, num_joints=4, up_axis=2, parent_joints=True, show_lra=True, name='test_jnt', start_offset=0, end_offset=0, joint_u_list=(3,3,1.5))
