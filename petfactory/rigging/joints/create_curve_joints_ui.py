@@ -202,7 +202,7 @@ class CreateCurveJointsWidget(QtGui.QWidget):
         
         joint_u_list = []
         for row in range(num_rows):
-            joint_u_list .append(float(self.model.item(row).text()))
+            joint_u_list.append(float(self.model.item(row).text()))
             
         print(curve_node, num_joints,joint_u_list)
         
