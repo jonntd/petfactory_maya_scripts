@@ -28,7 +28,7 @@ def pos_on_curve(crv, num_pos, start_offset=0.0, end_offset=0.0, u_param_list=No
     for index in range(num_pos):
         
         u = crv_shape.findParamFromLength(u_param_list[index]*length+start_length_offset)
-        p = crv_shape.getPointAtParam(u, space='world')
+        p = crv_shape.getPointAtParam(u, space='object')
         pos_list.append(p)
         
     return pos_list
