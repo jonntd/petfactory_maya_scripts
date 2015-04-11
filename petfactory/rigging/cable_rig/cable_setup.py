@@ -18,6 +18,9 @@ reload(curve_skinweight)
 import petfactory.rigging.joints.create_joints as create_joints
 reload(create_joints)
 
+import petfactory.util.attr as pet_attr
+reload(pet_attr)
+
 '''
 TODO
 
@@ -570,6 +573,16 @@ def setup_crv_list( crv_list,
         follicle_set.add(cable_dict['follicle'])
         start_ctrl_set.add(cable_dict['start_ctrl'])
         end_ctrl_set.add(cable_dict['end_ctrl'])
+        
+        
+        # store attrs used as json string
+        json_dict = {   'name_start_index':name_start_index,
+                        'num_ik_joints':num_ik_joints,
+                        'num_bind_joints':num_bind_joints,
+                        'cable_radius':cable_radius,
+                        'cable_axis_divisions':cable_axis_divisions}
+            
+        pet_attr.set_json_attr(crv, json_dict)
                             
 
 

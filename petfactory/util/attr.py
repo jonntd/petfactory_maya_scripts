@@ -11,10 +11,10 @@ def set_json_attr(node, info_dict):
         pm.deleteAttr(node, at='json')
         
     
-    else:
-        pm.addAttr(node, ln='json', dt='string', k=False)
-        node.json.set('{0}'.format(json_data))
-        node.json.lock()
+    #else:
+    pm.addAttr(node, ln='json', dt='string', k=False)
+    node.json.set('{0}'.format(json_data))
+    node.json.lock()
 
 
 def get_json_attr(node):
