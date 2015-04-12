@@ -580,7 +580,8 @@ def setup_crv_list( crv_list,
                         'num_ik_joints':num_ik_joints,
                         'num_bind_joints':num_bind_joints,
                         'cable_radius':cable_radius,
-                        'cable_axis_divisions':cable_axis_divisions}
+                        'cable_axis_divisions':cable_axis_divisions,
+                        'joint_spacing_list':joint_u_list}
             
         pet_attr.set_json_attr(crv, json_dict)
                             
@@ -588,8 +589,8 @@ def setup_crv_list( crv_list,
 
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple_nhair.mb', f=True)
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_single_nhair.mb', f=True)
-
 '''
+
 crv_1 = pm.PyNode('curve1')
 #crv_2 = pm.PyNode('curve2')
 #crv_3 = pm.PyNode('curve3')
@@ -614,7 +615,7 @@ use_existing_hairsystem = False
 share_hairsystem = True
 existing_hairsystem = None
 
-joint_u_list=(3,3,1.8)
+joint_u_list=(0,.25,.75,1)
 #joint_u_list = None
 
 #existing_hairsystem = pm.PyNode('hairSystem1')
