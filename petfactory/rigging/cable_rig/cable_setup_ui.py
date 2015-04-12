@@ -330,7 +330,17 @@ class CableSetupWidget(QtGui.QWidget):
                 
                 if num_ik_joints is not None:
                     self.cable_ik_joints_spinbox.setValue(num_ik_joints)
-                                    
+                
+                if joint_spacing_list is not None:
+                    len_joint_spacing_list = len(joint_spacing_list)
+                    if num_ik_joints != len_joint_spacing_list:
+                        pm.warning('The length of the joint_spacing_list {0} do not match the number of ik joints {1}'.format(len_joint_spacing_list, num_ik_joints))
+                        return
+                    
+                    # set the text of the model
+                    for row, joint_spacing in enumerate(joint_spacing_list):
+                        self.joint_spacing_model.item(row, 0).setText(str(joint_spacing))
+                                        
             else:
                 pm.warning('No json attr on curve!')
                             
