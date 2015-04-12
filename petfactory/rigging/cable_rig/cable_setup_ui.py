@@ -17,6 +17,9 @@ reload(cable_setup)
 import petfactory.rigging.joints.create_curve_joints_ui as create_curve_joints_ui
 reload(create_curve_joints_ui)
 
+import petfactory.util.attr as pet_attr
+reload(pet_attr)
+
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
@@ -71,8 +74,13 @@ class CableSetupWidget(QtGui.QWidget):
         
         # tab 2 
         tab_2 = QtGui.QWidget()
-        tab_widget.addTab(tab_2, "Extra")  
+        tab_widget.addTab(tab_2, "Sets")  
         tab_2_vertical_layout = QtGui.QVBoxLayout(tab_2)
+        
+        # tab 2 
+        tab_3 = QtGui.QWidget()
+        tab_widget.addTab(tab_3, "Joints")  
+        tab_3_vertical_layout = QtGui.QVBoxLayout(tab_3)
 
           
         # tree view
@@ -202,7 +210,7 @@ class CableSetupWidget(QtGui.QWidget):
         
         
         
-        # extra (tab 2)
+        # Sets (tab 2)
         
         # rig group box
         self.sets_group_box = QtGui.QGroupBox("Use existing Sets")
@@ -217,20 +225,18 @@ class CableSetupWidget(QtGui.QWidget):
         self.start_ctrl_set_lineedit = simple_widget.add_populate_lineedit(label='Start ctrl >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
         self.end_ctrl_set_lineedit = simple_widget.add_populate_lineedit(label='End ctrl   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
         self.follicle_set_lineedit = simple_widget.add_populate_lineedit(label='Follicle   >', parent_layout=sets_group_vert_layout, callback=self.populate_lineedit, kwargs={'type':pm.nodetypes.ObjectSet})
-         
+        
+        tab_2_vertical_layout.addStretch()
+        
+        # Joints (tab 3)        
+        
         # custom joint spacing group box
         self.custom_joint_spacing_groupbox = QtGui.QGroupBox("Custom joint spacing")
         self.custom_joint_spacing_groupbox.setCheckable(True)
         self.custom_joint_spacing_groupbox.setChecked(False)
-        tab_2_vertical_layout.addWidget(self.custom_joint_spacing_groupbox)
+        tab_3_vertical_layout.addWidget(self.custom_joint_spacing_groupbox)
         custom_joint_spacing_groupbox_vbox = QtGui.QVBoxLayout()
         self.custom_joint_spacing_groupbox.setLayout(custom_joint_spacing_groupbox_vbox)
-        
-        
-        # preview joints
-        preview_joints_button = QtGui.QPushButton('Preview joints ui')
-        preview_joints_button.clicked.connect(self.preview_joints_button_clicked)
-        custom_joint_spacing_groupbox_vbox.addWidget(preview_joints_button)
 
         # model
         self.joint_spacing_model = QtGui.QStandardItemModel()
@@ -247,9 +253,28 @@ class CableSetupWidget(QtGui.QWidget):
         
         self.update_data_model(self.cable_ik_joints_spinbox.value())
         
-        refresh_joint_spacing_button = QtGui.QPushButton('Refresh joint spacing')
-        refresh_joint_spacing_button.clicked.connect(self.refresh_joint_spacing_button_clicked)
-        custom_joint_spacing_groupbox_vbox.addWidget(refresh_joint_spacing_button)
+        
+        # preview joints
+        
+        get_spacing_from_curve_button = QtGui.QPushButton('Get spacing from curve')
+        get_spacing_from_curve_button.clicked.connect(self.get_spacing_from_curve_button_clicked)
+        tab_3_vertical_layout.addWidget(get_spacing_from_curve_button)
+        
+        
+        preview_joints_button = QtGui.QPushButton('Open create curve joints ui')
+        preview_joints_button.clicked.connect(self.preview_joints_button_clicked)
+        tab_3_vertical_layout.addWidget(preview_joints_button)
+        
+        
+        export_import_hbox = QtGui.QHBoxLayout()
+        tab_3_vertical_layout.addLayout(export_import_hbox)
+        refresh_joint_spacing_button = QtGui.QPushButton('>> Import')
+        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='export'))
+        export_import_hbox.addWidget(refresh_joint_spacing_button)
+        
+        refresh_joint_spacing_button = QtGui.QPushButton('Export >>')
+        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='import'))
+        export_import_hbox.addWidget(refresh_joint_spacing_button)
                 
         #tab_2_vertical_layout.addStretch()
     
@@ -275,12 +300,27 @@ class CableSetupWidget(QtGui.QWidget):
             
             self.joint_spacing_model.setItem(row, 0, item)
 
-   
+    def get_spacing_from_curve_button_clicked(self):
+        
+        if pet_verify.verify_selection(pm.nodetypes.NurbsCurve):
+            
+            json_dict = pet_attr.get_json_attr(pm.ls(sl=True)[0])
+            
+            # found a dict
+            if json_dict is not None:
+                print('found dict')
+            else:
+                pm.warning('No json attr on curve!')
+                
+            
+        else:
+            pm.warning('Select a curve!')
+        
     def number_of_joints_changed(self):        
         self.update_data_model(self.sender().value())
                 
            
-    def refresh_joint_spacing_button_clicked(self):
+    def transfer_joint_spacing_button_clicked(self, direction):
         
         if self.preview_joint_spacing_ui is None:
             pm.warning('Please open the Preview joints ui')
@@ -292,13 +332,17 @@ class CableSetupWidget(QtGui.QWidget):
             if num_preview_joints != num_ik_joints:
                 pm.warning('Number of joints do not match, pleas use {0} preview joints'.format(num_ik_joints))
                 return
-                
-            # get the data
-            num_rows = self.preview_joint_spacing_ui.model.rowCount()
             
-            for row in range(num_rows):
-                val = self.preview_joint_spacing_ui.model.item(row, 0).text()
-                self.joint_spacing_model.item(row, 0).setText(val)
+            
+            if direction == 'export':
+                # get the data
+                num_rows = self.preview_joint_spacing_ui.model.rowCount()
+                
+                for row in range(num_rows):
+                    val = self.preview_joint_spacing_ui.model.item(row, 0).text()
+                    self.joint_spacing_model.item(row, 0).setText(val)
+            else:
+                print('import')
             
                             
     
@@ -488,7 +532,7 @@ def show():
     return win
 
 
-'''
+
 try:
     win.close()
     
@@ -497,7 +541,7 @@ except NameError:
 
 win = show()
 win.move(100,150)
-'''
+
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple.mb', f=True)
 
 #pm.select(pm.PyNode('curve1'), pm.PyNode('curve2'), pm.PyNode('curve3'))
