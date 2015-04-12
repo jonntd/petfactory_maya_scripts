@@ -256,7 +256,7 @@ class CableSetupWidget(QtGui.QWidget):
         
         # preview joints
         
-        get_spacing_from_curve_button = QtGui.QPushButton('Get spacing from curve')
+        get_spacing_from_curve_button = QtGui.QPushButton('Get setup info from curve')
         get_spacing_from_curve_button.clicked.connect(self.get_spacing_from_curve_button_clicked)
         tab_3_vertical_layout.addWidget(get_spacing_from_curve_button)
         
@@ -308,11 +308,32 @@ class CableSetupWidget(QtGui.QWidget):
             
             # found a dict
             if json_dict is not None:
-                print('found dict')
+
+                cable_axis_divisions = json_dict.get('cable_axis_divisions')
+                cable_radius = json_dict.get('cable_radius')
+                joint_spacing_list = json_dict.get('joint_spacing_list')
+                name_start_index = json_dict.get('name_start_index')
+                num_bind_joints = json_dict.get('num_bind_joints')
+                num_ik_joints = json_dict.get('num_ik_joints')
+                
+                if cable_axis_divisions is not None:
+                    self.cable_axis_divisions_spinbox.setValue(cable_axis_divisions)
+                
+                if cable_radius is not None:
+                    self.cable_radius_spinbox.setValue(cable_radius)
+                    
+                if name_start_index is not None:
+                    self.name_start_index_spinbox.setValue(name_start_index)
+                    
+                if num_bind_joints is not None:
+                    self.cable_bind_joints_spinbox.setValue(num_bind_joints)
+                
+                if num_ik_joints is not None:
+                    self.cable_ik_joints_spinbox.setValue(num_ik_joints)
+                                    
             else:
                 pm.warning('No json attr on curve!')
-                
-            
+                            
         else:
             pm.warning('Select a curve!')
         
