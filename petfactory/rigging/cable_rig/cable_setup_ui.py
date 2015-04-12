@@ -269,11 +269,11 @@ class CableSetupWidget(QtGui.QWidget):
         export_import_hbox = QtGui.QHBoxLayout()
         tab_3_vertical_layout.addLayout(export_import_hbox)
         refresh_joint_spacing_button = QtGui.QPushButton('>> Import')
-        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='export'))
+        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='import'))
         export_import_hbox.addWidget(refresh_joint_spacing_button)
         
         refresh_joint_spacing_button = QtGui.QPushButton('Export >>')
-        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='import'))
+        refresh_joint_spacing_button.clicked.connect(partial(self.transfer_joint_spacing_button_clicked, direction='export'))
         export_import_hbox.addWidget(refresh_joint_spacing_button)
                 
         #tab_2_vertical_layout.addStretch()
@@ -365,15 +365,19 @@ class CableSetupWidget(QtGui.QWidget):
                 return
             
             
-            if direction == 'export':
-                # get the data
-                num_rows = self.preview_joint_spacing_ui.model.rowCount()
+            if direction == 'import':
                 
+                num_rows = self.preview_joint_spacing_ui.model.rowCount()
                 for row in range(num_rows):
                     val = self.preview_joint_spacing_ui.model.item(row, 0).text()
                     self.joint_spacing_model.item(row, 0).setText(val)
-            else:
-                print('import')
+                    
+            elif direction == 'export':
+                
+                num_rows = self.joint_spacing_model.rowCount()
+                for row in range(num_rows):
+                    val = self.joint_spacing_model.item(row, 0).text()
+                    self.preview_joint_spacing_ui.model.item(row, 0).setText(val)
             
                             
     
@@ -563,7 +567,7 @@ def show():
     return win
 
 
-
+'''
 try:
     win.close()
     
@@ -572,7 +576,7 @@ except NameError:
 
 win = show()
 win.move(100,150)
-
+'''
 #pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/cable_crv_10_cvs_tripple.mb', f=True)
 
 #pm.select(pm.PyNode('curve1'), pm.PyNode('curve2'), pm.PyNode('curve3'))
