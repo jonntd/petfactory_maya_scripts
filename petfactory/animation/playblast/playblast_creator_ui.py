@@ -492,7 +492,7 @@ class PlayblastWidget(QtGui.QWidget):
                 else:
                     first_keyframe = last_keyframe = '0'
                 
-                self.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
+                self.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '', True)
             else:
                 pm.warning('Make sure you have a camera selected!')
     
