@@ -178,9 +178,15 @@ class PlayblastWidget(QtGui.QWidget):
         self.set_end_time_button.clicked.connect(self.set_time_button_clicked)
         
 
+        # set to range
+        set_to_range_button = QtGui.QPushButton('Set to current range')
+        camera_groupbox_gridlayout.addWidget(set_to_range_button, 1, 1)
+        set_to_range_button.clicked.connect(self.set_to_range_clicked)
+        
+        
         # look through camera
         look_through_button = QtGui.QPushButton('Look through camera')
-        camera_groupbox_gridlayout.addWidget(look_through_button, 1, 1)
+        camera_groupbox_gridlayout.addWidget(look_through_button, 2, 1)
         look_through_button.clicked.connect(self.look_through_button_click)
 
         
@@ -210,7 +216,7 @@ class PlayblastWidget(QtGui.QWidget):
         self.resolution_combobox = simple_widget.labeled_combobox(label='Resolution', parent_layout=output_groupbox_vbox, items=resolution_keys)
         
         
-        # do it
+        # do playblast
         playblast_hbox = QtGui.QHBoxLayout()
         self.content_layout.addLayout(playblast_hbox)
         
@@ -221,12 +227,30 @@ class PlayblastWidget(QtGui.QWidget):
         playblast_button.clicked.connect(self.playblast_clicked)
         
         
+        # do camera sequenser
+        sequenser_hbox = QtGui.QHBoxLayout()
+        self.content_layout.addLayout(sequenser_hbox)
+        
+        sequenser_button = QtGui.QPushButton('Sequenser')
+        sequenser_button.setMinimumWidth(125)
+        sequenser_hbox.addStretch()
+        sequenser_hbox.addWidget(sequenser_button)
+        sequenser_button.clicked.connect(self.sequenser_clicked)
+        
+        
     # stop keypress event propagation
     def keyPressEvent(self, event):
         pass
         #if event.key() == QtCore.Qt.Key_Escape:
             #print('ESCAPE')
     
+    def set_to_range_clicked(self):
+        print(self.sender())
+        
+    def sequenser_clicked(self):
+        print(self.sender())
+        
+        
     def get_selected_row(self):
         
         selection_model = self.clip_tableview.selectionModel()
