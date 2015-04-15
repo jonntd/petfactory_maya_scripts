@@ -269,37 +269,39 @@ class PlayblastWidget(QtGui.QWidget):
         for row in range(num_children):
 
             camera_item = self.model.item(row, 0)
+            camera_name = camera_item.text()
+            camera_node = pet_verify.to_pynode(camera_name)
             
-            if camera_item.checkState():
-                
-                camera_name = camera_item.text()
-                camera_node = pet_verify.to_pynode(camera_name)
-                                    
-                if camera_node is None:
-                    pm.warning('Not a valid camera, skipping')
-                    continue
-                
-                
-                start_time_item = self.model.item(row, 2)    
-                end_time_item = self.model.item(row, 3)
-                
-                start_time_text = start_time_item.text()
-                end_time_text = end_time_item.text()
-                
-                if int(start_time_text) > int(end_time_text):
-                    pm.warning('The start time cannot be greater than the end time!, skipping')
-                    continue
+            '''                
+            if camera_node is None:
+                pm.warning('Not a valid camera, skipping')
+                continue
+            '''
             
-                notes_item = self.model.item(row, 1)
- 
-                # add the dict
-                info_dict = {}
-                clip_list.append(info_dict)
-                
-                info_dict['camera'] = camera_node.shortName()
-                info_dict['start_time'] = start_time_text
-                info_dict['end_time'] = end_time_text
-                info_dict['notes'] = notes_item.text() 
+            
+            start_time_item = self.model.item(row, 2)    
+            end_time_item = self.model.item(row, 3)
+            
+            start_time_text = start_time_item.text()
+            end_time_text = end_time_item.text()
+            
+            '''
+            if int(start_time_text) > int(end_time_text):
+                pm.warning('The start time cannot be greater than the end time!, skipping')
+                continue
+            '''
+        
+            notes_item = self.model.item(row, 1)
+
+            # add the dict
+            info_dict = {}
+            clip_list.append(info_dict)
+            
+            info_dict['camera'] = camera_node.shortName()
+            info_dict['start_time'] = int(start_time_text)
+            info_dict['end_time'] = int(end_time_text)
+            info_dict['notes'] = notes_item.text()
+            info_dict['checked'] = True if camera_item.checkState() else False
                 
                 
         width, height = self.resolution_dict.get(self.resolution_combobox.currentText())
@@ -322,17 +324,22 @@ class PlayblastWidget(QtGui.QWidget):
             return
         
      
-        playblast_dict = self.build_info_dict()         
+        info_dict = self.build_info_dict() 
+        
+        dir_path = playblast_creator.create_playblast_directory(self.output_dir)        
  
+        '''
         if playblast_dict is None:
             return
+            
+            
 
         clip_info_list = playblast_dict.get('clips')
         width = playblast_dict.get('width')
         height = playblast_dict.get('height')
         
         
-        dir_path = playblast_creator.create_playblast_directory(self.output_dir)
+        
         
         if dir_path is None:
             return
@@ -356,9 +363,10 @@ class PlayblastWidget(QtGui.QWidget):
                                             height=height)
                                             
                                             
-                                            
+        '''
+                                           
         # save json
-        json_data = json.dumps(playblast_dict, indent=4)
+        json_data = json.dumps(info_dict, indent=4)
         json_path = os.path.join(dir_path, 'playblast.json')
         
         with open(json_path, 'w') as f:
@@ -411,13 +419,15 @@ class PlayblastWidget(QtGui.QWidget):
                 
                 if len(key_list) > 0:
                     key_list.sort()
-                    first_keyframe = str(int(key_list[0]))
-                    last_keyframe = str(int(key_list[-1]))
+                    first_keyframe = key_list[0]
+                    last_keyframe = key_list[-1]
                     
                 else:
                     first_keyframe = last_keyframe = '0'
                 
                 self.add_clip(pet_verify.to_transform(sel).shortName(), first_keyframe, last_keyframe, '')
+            else:
+                pm.warning('Make sure you have a camera selected!')
     
     def remove_cam_button_click(self):
         
@@ -437,7 +447,7 @@ class PlayblastWidget(QtGui.QWidget):
             self.model.removeRow(row)
             
             
-    def add_clip(self, name, start_time, end_time, notes):
+    def add_clip(self, name, start_time, end_time, notes, checked):
         
         #print(name, start_time, end_time, notes)
 
@@ -445,17 +455,26 @@ class PlayblastWidget(QtGui.QWidget):
         cam_item = QtGui.QStandardItem(name)
         cam_item.setCheckable(True)
         
+        
+        if checked:
+            cam_item.setCheckState(QtCore.Qt.Checked)  
+        else:
+            cam_item.setCheckState(QtCore.Qt.Unchecked)
+            
+        
+        '''
         # uncheck cameras that have no animation
         if start_time == end_time:
             cam_item.setCheckState(QtCore.Qt.Unchecked)
             
         else:
             cam_item.setCheckState(QtCore.Qt.Checked)
+        '''
 
         # add other items
-        start_time_item = QtGui.QStandardItem(start_time)
+        start_time_item = QtGui.QStandardItem(str(int(start_time)))
         notes_item = QtGui.QStandardItem(notes)
-        end_time_item = QtGui.QStandardItem(end_time)
+        end_time_item = QtGui.QStandardItem(str(int(end_time)))
         
         # add itemns to model
         # get the curr num rows so that we can insert the items at a free row
@@ -479,7 +498,7 @@ class PlayblastWidget(QtGui.QWidget):
         
         clip_list = playblast_dict.get('clips')
         if len(clip_list) < 1:
-            pm.warning('The clip list is empty, file not saved.. Make sure that the clips are checked.')
+            pm.warning('The clip list is empty, file not saved.')
             return None
   
         pet_persistence.save_json(playblast_dict, title='Save clips', filter='JSON (*.json)')
@@ -492,42 +511,43 @@ class PlayblastWidget(QtGui.QWidget):
         
     def load_clips_action_triggered(self):
      
-        clip_dict = pet_persistence.load_json(title='Load clips', filter='JSON (*.json)')
-        #pprint.pprint(clip_dict)
+        info_dict = pet_persistence.load_json(title='Load clips', filter='JSON (*.json)')
+        #pprint.pprint(info_dict)
         
-        if clip_dict is None:
+        if info_dict is None:
             return
         
-        clip_list = clip_dict.get('clips')
+        cam_info_list = info_dict.get('clips')
         
-        if clip_list is None:
+        if cam_info_list is None:
             pm.warning('Could not load clips!')
             return
                 
-        for clip in clip_list:
+        for cam_info in cam_info_list:
             
-            cam = clip.get('camera')
-            start_time = clip.get('start_time')
-            end_time = clip.get('end_time')
-            notes = clip.get('notes')
-            
-            print(cam, start_time, end_time, notes)
-            
-            self.add_clip(name=cam, start_time=start_time, end_time=end_time, notes=notes)
+            cam = cam_info.get('camera')
+            start_time = cam_info.get('start_time')
+            end_time = cam_info.get('end_time')
+            notes = cam_info.get('notes')
+            checked = cam_info.get('checked')
+                        
+            self.add_clip(name=cam, start_time=start_time, end_time=end_time, notes=notes, checked=checked)
 
 
 def show():
     win = PlayblastWidget(parent=maya_main_window())
     win.show()
+    return win
 
-'''
+
 try:
     win.close()
     
 except NameError:
     pass 
     
-win = PlayblastWidget(parent=maya_main_window())
-win.show()
-win.move(250,150)
-'''
+win = show()
+win.move(150,150)
+
+win.add_clip(name='camera1', start_time=10, end_time=30, notes='a 1 string', checked=False)
+win.add_clip(name='camera2', start_time=20, end_time=40, notes='a 2 string', checked=True)
