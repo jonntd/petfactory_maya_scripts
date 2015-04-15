@@ -326,33 +326,45 @@ class PlayblastWidget(QtGui.QWidget):
      
         info_dict = self.build_info_dict() 
         
-        dir_path = playblast_creator.create_playblast_directory(self.output_dir)        
- 
-        '''
-        if playblast_dict is None:
-            return
-            
-            
-
-        clip_info_list = playblast_dict.get('clips')
-        width = playblast_dict.get('width')
-        height = playblast_dict.get('height')
-        
-        
-        
+        dir_path = playblast_creator.create_playblast_directory(self.output_dir)
         
         if dir_path is None:
             return
-    
+            
+        if info_dict is None:
+            return
+            
+            
+        clip_info_list = info_dict.get('clips')
+        width = info_dict.get('width')
+        height = info_dict.get('height')
+            
         for clip_info in clip_info_list:
             
-            cam = clip_info.get('camera')
-            notes = clip_info.get('notes')
+            checked = clip_info.get('checked')
+            
+            if not checked:
+                print('Clip is unchecked, skipping...')
+                continue
+            
             start_time = clip_info.get('start_time')
-            end_time = clip_info.get('end_time')
+            end_time = clip_info.get('end_time') 
             
-            cam_node = pet_verify.to_pynode(cam)
+            if start_time > end_time:
+                print('Start time is greater than end time, skipping...')
+                continue
+                
             
+            cam = clip_info.get('camera')
+            
+            if not pet_verify.verify_string(cam, pm.nodetypes.Camera):
+                print('Not a valid camera, skipping...')
+                continue
+                
+            
+
+            notes = clip_info.get('notes')         
+            cam_node = pet_verify.to_pynode(cam)            
                 
             playblast_creator.do_playblast( current_camera=cam_node,
                                             file_name='{0}_{1}'.format(cam, notes),
@@ -363,7 +375,6 @@ class PlayblastWidget(QtGui.QWidget):
                                             height=height)
                                             
                                             
-        '''
                                            
         # save json
         json_data = json.dumps(info_dict, indent=4)
@@ -461,16 +472,6 @@ class PlayblastWidget(QtGui.QWidget):
         else:
             cam_item.setCheckState(QtCore.Qt.Unchecked)
             
-        
-        '''
-        # uncheck cameras that have no animation
-        if start_time == end_time:
-            cam_item.setCheckState(QtCore.Qt.Unchecked)
-            
-        else:
-            cam_item.setCheckState(QtCore.Qt.Checked)
-        '''
-
         # add other items
         start_time_item = QtGui.QStandardItem(str(int(start_time)))
         notes_item = QtGui.QStandardItem(notes)
