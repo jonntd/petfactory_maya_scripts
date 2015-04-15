@@ -32,9 +32,24 @@ def create_shot_from_timerange(current_shot=None, camera=None):
     
     shot = pm.shot(my_shot_name, startTime=start_time, endTime=end_time, sequenceStartTime=seq_start_time, sequenceEndTime=seq_end_time, currentCamera=camera)
     return shot
-    
-    
 
+
+def create_shot(camera, start_time, end_time, current_shot=None):
+
+    my_shot_name = 'shot_{0}'.format(camera.shortName())
+    
+    duration = (end_time - start_time)
+        
+    if current_shot is None:
+        seq_start_time = start_time
+        seq_end_time = end_time
+        
+    else:
+        seq_start_time =  current_shot.getSequenceEndTime() + 1
+        seq_end_time = seq_start_time + duration
+    
+    shot = pm.shot(my_shot_name, startTime=start_time, endTime=end_time, sequenceStartTime=seq_start_time, sequenceEndTime=seq_end_time, currentCamera=camera)
+    return shot
 
 #shot = create_shot_from_timerange()
 #shot = create_shot_from_timerange(shot)

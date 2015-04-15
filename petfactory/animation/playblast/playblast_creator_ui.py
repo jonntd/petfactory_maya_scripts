@@ -18,6 +18,9 @@ reload(playblast_creator)
 import petfactory.gui.persistence as pet_persistence
 reload(pet_persistence)
 
+import petfactory.animation.playblast.camera_sequenser as camera_sequenser
+reload(camera_sequenser)
+
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
@@ -248,8 +251,50 @@ class PlayblastWidget(QtGui.QWidget):
         print(self.sender())
         
     def sequenser_clicked(self):
-        print(self.sender())
         
+        info_dict = self.build_info_dict() 
+                            
+        if info_dict is None:
+            return
+            
+            
+        clip_info_list = info_dict.get('clips')
+        width = info_dict.get('width')
+        height = info_dict.get('height')
+        
+        current_shot = None
+        for clip_info in clip_info_list:
+            
+            checked = clip_info.get('checked')
+            
+            if not checked:
+                print('Clip is unchecked, skipping...')
+                continue
+            
+            start_time = clip_info.get('start_time')
+            end_time = clip_info.get('end_time') 
+            
+            if start_time > end_time:
+                print('Start time is greater than end time, skipping...')
+                continue
+                
+            
+            cam = clip_info.get('camera')
+            
+            if not pet_verify.verify_string(cam, pm.nodetypes.Camera):
+                print('Not a valid camera, skipping...')
+                continue
+                
+            
+            #notes = clip_info.get('notes')         
+            cam_node = pet_verify.to_pynode(cam)
+            
+            print(cam_node, start_time, end_time)
+            
+            
+            shot = camera_sequenser.create_shot(camera=cam_node, start_time=start_time, end_time=end_time, current_shot=current_shot)
+            current_shot = shot
+
         
     def get_selected_row(self):
         
@@ -295,25 +340,12 @@ class PlayblastWidget(QtGui.QWidget):
             camera_item = self.model.item(row, 0)
             camera_name = camera_item.text()
             camera_node = pet_verify.to_pynode(camera_name)
-            
-            '''                
-            if camera_node is None:
-                pm.warning('Not a valid camera, skipping')
-                continue
-            '''
-            
-            
+                        
             start_time_item = self.model.item(row, 2)    
             end_time_item = self.model.item(row, 3)
             
             start_time_text = start_time_item.text()
             end_time_text = end_time_item.text()
-            
-            '''
-            if int(start_time_text) > int(end_time_text):
-                pm.warning('The start time cannot be greater than the end time!, skipping')
-                continue
-            '''
         
             notes_item = self.model.item(row, 1)
 
@@ -564,7 +596,7 @@ def show():
     win.show()
     return win
 
-
+'''
 try:
     win.close()
     
@@ -576,3 +608,4 @@ win.move(150,150)
 
 win.add_clip(name='camera1', start_time=10, end_time=30, notes='a 1 string', checked=False)
 win.add_clip(name='camera2', start_time=20, end_time=40, notes='a 2 string', checked=True)
+'''
