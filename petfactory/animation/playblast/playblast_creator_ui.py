@@ -169,28 +169,36 @@ class PlayblastWidget(QtGui.QWidget):
         
         # set start time
         self.set_start_time_button = QtGui.QPushButton('|<')
-        self.set_start_time_button.setFixedWidth(60)
+        self.set_start_time_button.setFixedWidth(40)
         set_start_end_time_hbox.addWidget(self.set_start_time_button)
         self.set_start_time_button.clicked.connect(self.set_time_button_clicked)
         
-        set_start_end_time_hbox.addStretch()
+        #set_start_end_time_hbox.addStretch()
+        # set to range
+        set_to_range_button = QtGui.QPushButton('Use Range')
+        set_start_end_time_hbox.addWidget(set_to_range_button, 1, 1)
+        set_to_range_button.clicked.connect(self.set_to_range_clicked)
+        
+        
         # set start time
         self.set_end_time_button = QtGui.QPushButton('>|')
-        self.set_end_time_button.setFixedWidth(60)
+        self.set_end_time_button.setFixedWidth(40)
         set_start_end_time_hbox.addWidget(self.set_end_time_button)
         self.set_end_time_button.clicked.connect(self.set_time_button_clicked)
         
 
-        # set to range
-        set_to_range_button = QtGui.QPushButton('Set to current range')
-        camera_groupbox_gridlayout.addWidget(set_to_range_button, 1, 1)
-        set_to_range_button.clicked.connect(self.set_to_range_clicked)
-        
-        
         # look through camera
         look_through_button = QtGui.QPushButton('Look through camera')
-        camera_groupbox_gridlayout.addWidget(look_through_button, 2, 1)
+        camera_groupbox_gridlayout.addWidget(look_through_button, 1, 1)
         look_through_button.clicked.connect(self.look_through_button_click)
+        
+        # set to range
+        set_to_range_button = QtGui.QPushButton('Selsect camera')
+        camera_groupbox_gridlayout.addWidget(set_to_range_button, 2, 1)
+        set_to_range_button.clicked.connect(self.select_camera)
+        
+        
+        
 
         
         # -----------------------------------------------------------------------
@@ -470,6 +478,23 @@ class PlayblastWidget(QtGui.QWidget):
         else:
             pm.playbackOptions(min=start_time, max=end_time)
    
+   
+    def select_camera(self):
+        
+        current_row = self.get_selected_row()
+        
+        if current_row is None:
+            return
+        
+        camera_string = self.model.item(current_row, 0).text() 
+        current_camera = pet_verify.to_pynode(camera_string)
+        
+        
+        if current_camera is None:
+            pm.warning('The camera "{0}" does not exist'.format(camera_string))
+            return
+            
+        pm.select(current_camera)
 
     def add_cam_button_click(self):
         
