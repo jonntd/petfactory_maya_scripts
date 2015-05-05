@@ -4,7 +4,8 @@ import maya.OpenMayaUI as omui
 import pymel.core as pm
 
 try:
-    import keyframes
+    import petfactory.animation.keyframes as keyframes
+    reload(keyframes)
 
 except ImportError as e:
     print('Module keyframes must be imported', e)

@@ -7,6 +7,9 @@ import pprint
 import json
 
 
+import petfactory.animation.ws_to_cam_build as ws_to_cam_build
+reload(ws_to_cam_build)
+    
 ############################################
 
 # write Maya data
@@ -284,6 +287,47 @@ def build_nuke_nodes(anim_dict):
         str += cam_dict_to_nuke_camera(dict, index, cam_pos_x, node_slot_width, scene_y_offset, frame_start)
 
     return str
+
+
+def ws_to_cam_dict_to_nuke(a_dict, an_index, node_slot_width, frame_start):
+    
+    name = a_dict.keys()[0]
+    attr_dict = a_dict.get(name)
+    
+    s = 'Transform { '
+    s += 'inputs 0 '
+    s += 'name {0} '.format(name)
+    #s += 'rot_order {0} '.format(attr_dict['rotation_order'][0])
+    s += 'center {0 0} '
+    #s += 'xpos {0} \n'.format(an_index * node_slot_width)
+    #s += 'ypos {0} '.format(scene_y_offset)
+    s += build_nuke_anim_curves(attr_dict, ['x', 'y'], 'translate', frame_start)
+    s += ' }\n'
+       
+    return s;
+
+def build_nuke_ws_to_cam_nodes(anim_dict):
+    
+    node_slot_width = 70
+    scene_y_offset = 150
+
+    # get info
+    frame_start = anim_dict.get('info').get('frame_start')
+    #frame_end = anim_dict.get('info').get('frame_end')
+    
+    # get the nulls and camera dicts
+    null_list = anim_dict.get("null")
+    
+    # init the return string 
+    str = ''
+    
+    for index, dict in enumerate(null_list):
+
+        str += ws_to_cam_dict_to_nuke(dict, index, node_slot_width, frame_start) 
+
+    return str    
+    
+    
     
 
 # get scene and keyframe data
@@ -518,6 +562,23 @@ def write_data(sel_list, frame_start, frame_end, file_format='json', scale=None)
     
     if len(sel_list) < 1:
         pm.warning('Select transform(s) and camera(s)')
+        return
+        
+    if file_format == 'world_to_camera_nk_copy':
+        print('world to camera')
+        do_remove_static_attr = False
+        scale = None
+        data_dict = None
+        data_dict = ws_to_cam_build.build_world_to_camera_dict(sel_list, frame_start, frame_end)
+        pprint.pprint(data_dict)
+        
+        if data_dict is None:
+            pm.warning('could not get ws to cam')
+            return
+            
+        anim_data = build_nuke_ws_to_cam_nodes(data_dict)
+        print(anim_data)
+        os.system("echo {0} | pbcopy".format('\'' + anim_data + '\''))
         return
         
     else:
