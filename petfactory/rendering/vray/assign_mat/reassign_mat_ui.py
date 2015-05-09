@@ -239,7 +239,13 @@ class ReassignMatWidget(QtGui.QWidget):
             
             
             # reassign the mat
-            pm.sets(new_mat_sg, forceElement=mesh_list)
+            
+            if len(mesh_list) > 0:
+                pm.sets(new_mat_sg, forceElement=mesh_list)
+                
+            else:
+                #pm.warning('{0} is not assigned to a mesh'.format(curr_mat.text()))
+                pass
         
         
         
