@@ -21,29 +21,46 @@ class ReassignMatWidget(QtGui.QWidget):
         
         # layout
         main_vbox = QtGui.QVBoxLayout()
-        main_vbox.setContentsMargins(0,0,0,0)
+        main_vbox.setContentsMargins(5,5,5,5)
         self.setLayout(main_vbox)
         
         
         # models
         self.curr_mat_model = QtGui.QStandardItemModel()
+        self.curr_mat_model.setHorizontalHeaderLabels(['Current Material'])
+        
         self.new_mat_model = QtGui.QStandardItemModel()
+        self.new_mat_model.setHorizontalHeaderLabels(['New Material'])
+        
         
         # tableview layout
         tableview_hbox = QtGui.QHBoxLayout()
         tableview_hbox.setContentsMargins(0,0,0,0)
         main_vbox.addLayout(tableview_hbox)
         
+        
+        
         # tableviews
         
-        # curr mat
+        # curr mat layout
+        curr_mat_tableview_vbox = QtGui.QVBoxLayout()
+        curr_mat_tableview_vbox.setContentsMargins(0,0,0,0)
+        tableview_hbox.addLayout(curr_mat_tableview_vbox)
+        
+        # curr mat tableview
         self.curr_mat_tableview = QtGui.QTableView()
         self.curr_mat_tableview.setModel(self.curr_mat_model)
+        curr_mat_header = self.curr_mat_tableview.horizontalHeader()
+        curr_mat_header.setStretchLastSection(True)
+        curr_mat_tableview_vbox.addWidget(self.curr_mat_tableview)
         
-        # new mat
-        self.new_mat_tableview = QtGui.QTableView()
-        self.new_mat_tableview.setModel(self.new_mat_model)
-        self.new_mat_tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        
+        
+        # load curr materials
+        self.add_to_curr_table_view_button = QtGui.QPushButton('Add materials')
+        curr_mat_tableview_vbox.addWidget(self.add_to_curr_table_view_button)
+        
+        
         
         
         # assign button
@@ -51,11 +68,31 @@ class ReassignMatWidget(QtGui.QWidget):
         self.assign_button.setFixedWidth(25)
         self.assign_button.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.assign_button.clicked.connect(self.assign_button_clicked)
-        
-        # add the widgets
-        tableview_hbox.addWidget(self.curr_mat_tableview)
         tableview_hbox.addWidget(self.assign_button)
-        tableview_hbox.addWidget(self.new_mat_tableview)
+        
+
+        # new mat
+        
+        # new mat layout
+        new_mat_tableview_vbox = QtGui.QVBoxLayout()
+        new_mat_tableview_vbox.setContentsMargins(0,0,0,0)
+        tableview_hbox.addLayout(new_mat_tableview_vbox)
+        
+        self.new_mat_tableview = QtGui.QTableView()
+        self.new_mat_tableview.setModel(self.new_mat_model)
+        self.new_mat_tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        new_mat_header = self.new_mat_tableview.horizontalHeader()
+        new_mat_header.setStretchLastSection(True)
+        new_mat_tableview_vbox.addWidget(self.new_mat_tableview)
+        
+        
+        
+        # load new materials
+        self.add_to_curr_table_view_button = QtGui.QPushButton('Add materials')
+        new_mat_tableview_vbox.addWidget(self.add_to_curr_table_view_button)
+
+                
+        
         
         
         
@@ -83,8 +120,21 @@ class ReassignMatWidget(QtGui.QWidget):
         if new_mat_node is None:
             pm.warning('The new mat is not a valid PyNode')
             return
+            
+        # get the shading group
+        new_mat_sg_list = new_mat_node.listConnections(type='shadingEngine')
         
-        
+        if len(new_mat_sg_list) < 1:
+
+            #sg = pm.createNode('shadingEngine')
+            sg = pm.sets(renderable=True, noSurfaceShader=True, empty=True, name='{0}SG'.format(new_mat.text()))
+            new_mat_node.outColor >> sg.surfaceShader
+            new_mat_sg = sg
+            
+        else:
+            new_mat_sg = new_mat_sg_list[0]
+            
+            
         curr_mat_list = []
         for index in curr_mat_selected_indexes:
             curr_mat = self.curr_mat_model.itemFromIndex(index)
@@ -103,8 +153,42 @@ class ReassignMatWidget(QtGui.QWidget):
             
             curr_mat.setText(new_mat.text())
             
-            print(curr_mat_node, new_mat_node)
+            #print(curr_mat_node, new_mat_node)
             
+            
+            # get the shading group
+            sg_list = curr_mat_node.listConnections(type='shadingEngine')
+            
+            if len(sg_list) < 1:
+                continue
+                
+            #print(sg_list)
+            
+            
+            mesh_list = []
+            face_list = []
+        
+             
+            # loop through the sg looking for menbers
+            for sg in sg_list:
+                
+                member_list = sg.members(flatten=True)
+                
+                # loop through the members, check it the mat is assigned to faces or meshes
+                for member in member_list:
+        
+                    if type(member) == pm.nodetypes.Mesh:
+                        #print('mashhh')
+                        mesh_list.append(member)
+                        
+                    elif type(member) == pm.general.MeshFace:
+                        #print('face')
+                        face_list.append(member)
+            
+            
+            
+            # reassign the mat
+            pm.sets(new_mat_sg, forceElement=mesh_list)
         
         
         
