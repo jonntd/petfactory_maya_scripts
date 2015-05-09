@@ -1,6 +1,7 @@
 from PySide import QtCore, QtGui
 from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
+from functools import partial
 
 import petfactory.util.verify as pet_verify
 
@@ -57,14 +58,22 @@ class ReassignMatWidget(QtGui.QWidget):
         
         
         # load curr materials
-        self.add_to_curr_table_view_button = QtGui.QPushButton('Add materials')
-        curr_mat_tableview_vbox.addWidget(self.add_to_curr_table_view_button)
-        
+        add_rem_curr_mat_hbox = QtGui.QHBoxLayout()
+        curr_mat_tableview_vbox.addLayout(add_rem_curr_mat_hbox)
+        self.add_to_curr_table_view_button = QtGui.QPushButton('+')
+        self.add_to_curr_table_view_button.clicked.connect(partial(self.add_items, self.curr_mat_tableview))
+        self.add_to_curr_table_view_button.setFixedWidth(40)
+        self.rem_to_curr_table_view_button = QtGui.QPushButton('-')
+        self.rem_to_curr_table_view_button.clicked.connect(partial(self.remove_items, self.curr_mat_tableview))
+        self.rem_to_curr_table_view_button.setFixedWidth(40)
+        add_rem_curr_mat_hbox.addWidget(self.add_to_curr_table_view_button)
+        add_rem_curr_mat_hbox.addWidget(self.rem_to_curr_table_view_button)
+        add_rem_curr_mat_hbox.addStretch()
         
         
         
         # assign button
-        self.assign_button = QtGui.QPushButton('<<')
+        self.assign_button = QtGui.QPushButton('<')
         self.assign_button.setFixedWidth(25)
         self.assign_button.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.assign_button.clicked.connect(self.assign_button_clicked)
@@ -80,7 +89,7 @@ class ReassignMatWidget(QtGui.QWidget):
         
         self.new_mat_tableview = QtGui.QTableView()
         self.new_mat_tableview.setModel(self.new_mat_model)
-        self.new_mat_tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        #self.new_mat_tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         new_mat_header = self.new_mat_tableview.horizontalHeader()
         new_mat_header.setStretchLastSection(True)
         new_mat_tableview_vbox.addWidget(self.new_mat_tableview)
@@ -88,13 +97,45 @@ class ReassignMatWidget(QtGui.QWidget):
         
         
         # load new materials
-        self.add_to_curr_table_view_button = QtGui.QPushButton('Add materials')
-        new_mat_tableview_vbox.addWidget(self.add_to_curr_table_view_button)
+        add_rem_new_mat_hbox = QtGui.QHBoxLayout()
+        new_mat_tableview_vbox.addLayout(add_rem_new_mat_hbox)
+        self.add_to_new_table_view_button = QtGui.QPushButton('+')
+        self.add_to_new_table_view_button.clicked.connect(partial(self.add_items, self.new_mat_tableview))
+        self.add_to_new_table_view_button.setFixedWidth(40)
+        self.rem_to_new_table_view_button = QtGui.QPushButton('-')
+        self.rem_to_new_table_view_button.clicked.connect(partial(self.remove_items, self.new_mat_tableview))
+        self.rem_to_new_table_view_button.setFixedWidth(40)
+        add_rem_new_mat_hbox.addWidget(self.add_to_new_table_view_button)
+        add_rem_new_mat_hbox.addWidget(self.rem_to_new_table_view_button)
+        add_rem_new_mat_hbox.addStretch()
 
                 
         
         
+    def add_items(self, tableview):
         
+        selection_model = tableview.selectionModel()
+        selected_indexes = selection_model.selectedIndexes()
+        model = tableview.model()
+        
+        self.add_selected_mat(model)
+
+       
+            
+    def remove_items(self, tableview):
+        
+        selection_model = tableview.selectionModel()
+        #selected_indexes = selection_model.selectedIndexes()
+        selected_rows = selection_model.selectedRows()
+        model = tableview.model()
+        
+        
+        row_list = [sel.row() for sel in selected_rows]
+        row_list.sort(reverse=True)
+        
+        for row in row_list:
+            model.removeRow(row)
+                            
         
     def assign_button_clicked(self):
         
@@ -199,7 +240,10 @@ class ReassignMatWidget(QtGui.QWidget):
         
         items = []
         for sel in sel_list:
-            items.append(QtGui.QStandardItem(sel.name()))
+            
+            item = QtGui.QStandardItem(sel.name())
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            items.append(item)
             
         self.add_to_model(model, items)
         
@@ -230,6 +274,7 @@ win = show()
 win.move(100,150)
 
 
+#pm.openFile('/Users/johan/Documents/Projects/python_dev/scenes/rgb_cmy_mat.mb', f=True)
 curr_mat_list = [pm.PyNode('blinn{0}'.format(n+1)) for n in range(3)]
 new_mat_list = [pm.PyNode('lambert{0}'.format(n+2)) for n in range(3)]
 
