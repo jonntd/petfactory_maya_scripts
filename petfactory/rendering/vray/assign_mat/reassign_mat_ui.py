@@ -50,6 +50,7 @@ class ReassignMatWidget(QtGui.QWidget):
         
         # curr mat tableview
         self.curr_mat_tableview = QtGui.QTableView()
+        self.curr_mat_tableview.doubleClicked.connect(self.tableview_double_clicked)
         self.curr_mat_tableview.setModel(self.curr_mat_model)
         curr_mat_header = self.curr_mat_tableview.horizontalHeader()
         curr_mat_header.setStretchLastSection(True)
@@ -88,6 +89,7 @@ class ReassignMatWidget(QtGui.QWidget):
         tableview_hbox.addLayout(new_mat_tableview_vbox)
         
         self.new_mat_tableview = QtGui.QTableView()
+        self.new_mat_tableview.doubleClicked.connect(self.tableview_double_clicked)
         self.new_mat_tableview.setModel(self.new_mat_model)
         #self.new_mat_tableview.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         new_mat_header = self.new_mat_tableview.horizontalHeader()
@@ -111,7 +113,15 @@ class ReassignMatWidget(QtGui.QWidget):
 
                 
         
+    def tableview_double_clicked(self, index):
         
+        model = index.model()
+        mat_node = pet_verify.to_pynode(index.data())
+        
+        if mat_node:
+            pm.select(mat_node)
+                  
+    
     def add_items(self, tableview):
         
         selection_model = tableview.selectionModel()
