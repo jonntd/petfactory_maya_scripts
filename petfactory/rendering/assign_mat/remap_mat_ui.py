@@ -313,7 +313,7 @@ def show():
     win.show()
     return win
 
-
+'''
 try:
     win.close()
     
@@ -334,4 +334,4 @@ win.add_selected_mat(win.curr_mat_model)
 
 pm.select(new_mat_list)
 win.add_selected_mat(win.new_mat_model)
-
+'''
