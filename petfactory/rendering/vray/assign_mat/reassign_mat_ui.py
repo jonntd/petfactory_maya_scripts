@@ -114,12 +114,21 @@ class ReassignMatWidget(QtGui.QWidget):
                 
         
     def tableview_double_clicked(self, index):
-        
+
         model = index.model()
         mat_node = pet_verify.to_pynode(index.data())
-        
+                
         if mat_node:
-            pm.select(mat_node)
+            
+            modifiers = QtGui.QApplication.keyboardModifiers()
+            
+            if modifiers == QtCore.Qt.ShiftModifier:
+                
+                pass
+
+                
+            else:            
+                pm.select(mat_node)
                   
     
     def add_items(self, tableview):
@@ -175,9 +184,8 @@ class ReassignMatWidget(QtGui.QWidget):
         # get the shading group
         new_mat_sg_list = new_mat_node.listConnections(type='shadingEngine')
         
+        # if we do not have a shading group create it
         if len(new_mat_sg_list) < 1:
-
-            #sg = pm.createNode('shadingEngine')
             sg = pm.sets(renderable=True, noSurfaceShader=True, empty=True, name='{0}SG'.format(new_mat.text()))
             new_mat_node.outColor >> sg.surfaceShader
             new_mat_sg = sg
@@ -200,56 +208,53 @@ class ReassignMatWidget(QtGui.QWidget):
                 pm.warning('The current mat is not a valid PyNode')
                 curr_mat.setText('not a valid material')
                 continue
-            
-            
+                        
             curr_mat.setText(new_mat.text())
             
-            #print(curr_mat_node, new_mat_node)
             
-            
-            # get the shading group
-            sg_list = curr_mat_node.listConnections(type='shadingEngine')
-            
-            if len(sg_list) < 1:
-                continue
-                
-            #print(sg_list)
-            
-            
-            mesh_list = []
-            face_list = []
-        
-             
-            # loop through the sg looking for menbers
-            for sg in sg_list:
-                
-                member_list = sg.members(flatten=True)
-                
-                # loop through the members, check it the mat is assigned to faces or meshes
-                for member in member_list:
-        
-                    if type(member) == pm.nodetypes.Mesh:
-                        #print('mashhh')
-                        mesh_list.append(member)
+            mesh_list, face_list = self.list_object_from_material(curr_mat_node)
                         
-                    elif type(member) == pm.general.MeshFace:
-                        #print('face')
-                        face_list.append(member)
-            
-            
-            
             # reassign the mat
-            
             if len(mesh_list) > 0:
                 pm.sets(new_mat_sg, forceElement=mesh_list)
                 
             else:
-                #pm.warning('{0} is not assigned to a mesh'.format(curr_mat.text()))
+                pm.warning('{0} is not assigned to a mesh'.format(curr_mat.text()))
                 pass
+            
+
         
         
+    def list_object_from_material(self, node):
         
+        # get the shading group
+        sg_list = node.listConnections(type='shadingEngine')
+        
+        if len(sg_list) < 1:
+            return None
+                    
+        mesh_list = []
+        face_list = []
+    
          
+        # loop through the sg looking for members
+        for sg in sg_list:
+            
+            member_list = sg.members(flatten=True)
+            
+            # loop through the members, check it the mat is assigned to faces or meshes
+            for member in member_list:
+    
+                if type(member) == pm.nodetypes.Mesh:
+                    mesh_list.append(member)
+                    
+                elif type(member) == pm.general.MeshFace:
+                    face_list.append(member)
+        
+        
+        return(mesh_list, face_list)
+                
+                 
     def add_selected_mat(self, model):
         
         sel_list = pm.ls(sl=True)
@@ -290,7 +295,7 @@ win = show()
 win.move(100,150)
 
 
-#pm.openFile('/Users/johan/Documents/Projects/python_dev/scenes/rgb_cmy_mat.mb', f=True)
+pm.openFile('/Users/johan/Documents/Projects/python_dev/scenes/rgb_cmy_mat.mb', f=True)
 curr_mat_list = [pm.PyNode('blinn{0}'.format(n+1)) for n in range(3)]
 new_mat_list = [pm.PyNode('lambert{0}'.format(n+2)) for n in range(3)]
 
