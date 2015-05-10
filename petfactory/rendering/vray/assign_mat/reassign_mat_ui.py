@@ -124,8 +124,18 @@ class ReassignMatWidget(QtGui.QWidget):
             
             if modifiers == QtCore.Qt.ShiftModifier:
                 
-                pass
-
+                mesh_list, face_list = self.list_object_from_material(mat_node)
+                
+                if len(face_list) > 0:
+                    pm.warning('Material is selected to faces!, CMD + click to select the faces')
+    
+                pm.select(mesh_list)
+                
+                
+            elif modifiers == QtCore.Qt.ControlModifier:
+                              
+                mesh_list, face_list = self.list_object_from_material(mat_node)                
+                pm.select(face_list)
                 
             else:            
                 pm.select(mat_node)
