@@ -158,9 +158,11 @@ class ReassignMatWidget(QtGui.QWidget):
         
     def assign_button_clicked(self):
         
+        # get the selected current materials
         curr_mat_selection_model = self.curr_mat_tableview.selectionModel()
         curr_mat_selected_indexes = curr_mat_selection_model.selectedIndexes()
         
+        # get the selected new materials
         new_mat_selection_model = self.new_mat_tableview.selectionModel()
         new_mat_selected_indexes = new_mat_selection_model.selectedIndexes()
         
@@ -173,9 +175,11 @@ class ReassignMatWidget(QtGui.QWidget):
             pm.warning('Select a new material')
             return
         
-        # use the new mat that was selected first (if cmd clicked)
+        
+        # use the new mat first in the list, get a PyNode ref
         new_mat = self.new_mat_model.itemFromIndex(new_mat_selected_indexes[0])
-        new_mat_node = pet_verify.to_pynode(new_mat.text())
+        new_mat_unicode = new_mat.text()
+        new_mat_node = pet_verify.to_pynode(new_mat_unicode)
         
         if new_mat_node is None:
             pm.warning('The new mat is not a valid PyNode')
@@ -186,32 +190,34 @@ class ReassignMatWidget(QtGui.QWidget):
         
         # if we do not have a shading group create it
         if len(new_mat_sg_list) < 1:
-            sg = pm.sets(renderable=True, noSurfaceShader=True, empty=True, name='{0}SG'.format(new_mat.text()))
+            sg = pm.sets(renderable=True, noSurfaceShader=True, empty=True, name='{0}SG'.format(new_mat_unicode))
             new_mat_node.outColor >> sg.surfaceShader
             new_mat_sg = sg
             
         else:
             new_mat_sg = new_mat_sg_list[0]
             
-            
-        curr_mat_list = []
+          
+        delete_list = []
+        #for curr_mat in curr_mat_list:
         for index in curr_mat_selected_indexes:
-            curr_mat = self.curr_mat_model.itemFromIndex(index)
-            curr_mat_list.append(curr_mat)
-            
-            
-        for curr_mat in curr_mat_list:
-            
+               
+            curr_mat = self.curr_mat_model.itemFromIndex(index) 
             curr_mat_node = pet_verify.to_pynode(curr_mat.text())
         
             if curr_mat_node is None:
                 pm.warning('The current mat is not a valid PyNode')
                 curr_mat.setText('not a valid material')
                 continue
+    
+            curr_mat.setText(new_mat_unicode)
+            
+            print(self.dup_count_in_model(new_mat_unicode, self.curr_mat_model))
+            
+            if self.dup_count_in_model(new_mat_unicode, self.curr_mat_model) > 1:
+                delete_list.append(index)
+                                
                         
-            curr_mat.setText(new_mat.text())
-            
-            
             mesh_list, face_list = self.list_object_from_material(curr_mat_node)
                         
             # reassign the mat
@@ -221,10 +227,24 @@ class ReassignMatWidget(QtGui.QWidget):
             else:
                 pm.warning('{0} is not assigned to a mesh'.format(curr_mat.text()))
                 pass
-            
+        
 
+        delete_list.sort(reverse=True)
+        for index in delete_list:
+            self.curr_mat_model.removeRow(index.row())
+                
+                        
+     
+    def dup_count_in_model(self, name, model):
         
+        name_list = []
+        num_rows = model.rowCount()
+        for row in range(num_rows):
+            name_list.append(model.item(row).text())
         
+        return name_list.count(name)
+        
+           
     def list_object_from_material(self, node):
         
         # get the shading group
