@@ -2,6 +2,7 @@ from PySide import QtCore, QtGui
 from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
 from functools import partial
+import pymel.core as pm
 
 import petfactory.util.verify as pet_verify
 
