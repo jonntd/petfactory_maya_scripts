@@ -1,3 +1,4 @@
+
 from PySide import QtCore, QtGui
 from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
@@ -71,6 +72,7 @@ class ReassignMatWidget(QtGui.QWidget):
         curr_mat_header = self.curr_mat_tableview.horizontalHeader()
         curr_mat_header.setStretchLastSection(True)
         curr_mat_tableview_vbox.addWidget(self.curr_mat_tableview)
+        self.curr_mat_tableview.setSortingEnabled(True)
         
         
         
@@ -111,6 +113,7 @@ class ReassignMatWidget(QtGui.QWidget):
         new_mat_header = self.new_mat_tableview.horizontalHeader()
         new_mat_header.setStretchLastSection(True)
         new_mat_tableview_vbox.addWidget(self.new_mat_tableview)
+        self.new_mat_tableview.setSortingEnabled(True)
         
         
         
