@@ -21,10 +21,25 @@ class ReassignMatWidget(QtGui.QWidget):
         self.resize(300,400)
         self.setWindowTitle("Reassign materials")
         
+        # master layout
+        master_layout = QtGui.QVBoxLayout()
+        master_layout.setContentsMargins(0,0,0,0)
+        self.setLayout(master_layout)
+        
+        # menubar
+        self.menu_bar = QtGui.QMenuBar()
+        master_layout.addWidget(self.menu_bar)
+        file_menu = self.menu_bar.addMenu('File')
+        
+        self.list_mat_on_sel_action = QtGui.QAction('List material on selected', self)
+        self.list_mat_on_sel_action.triggered.connect(self.list_mat_on_selected)
+        file_menu.addAction(self.list_mat_on_sel_action)
+        
+        
         # layout
         main_vbox = QtGui.QVBoxLayout()
         main_vbox.setContentsMargins(5,5,5,5)
-        self.setLayout(main_vbox)
+        master_layout.addLayout(main_vbox)
         
         
         # models
@@ -113,7 +128,19 @@ class ReassignMatWidget(QtGui.QWidget):
         add_rem_new_mat_hbox.addStretch()
 
                 
+    def list_mat_on_selected(self):
         
+        shape_list = pm.ls(dag=True, o=True, s=True, sl=True)
+        sg_list = pm.listConnections(shape_list, type='shadingEngine')
+        mat_list = list(set(pm.ls(pm.listConnections(sg_list), materials=True)))
+        
+        if len(mat_list) > 0:
+            
+            pm.select(mat_list)
+            self.add_selected_mat(self.curr_mat_model)
+            
+
+           
     def tableview_double_clicked(self, index):
 
         model = index.model()
@@ -324,15 +351,4 @@ except NameError:
 
 win = show()
 win.move(100,150)
-
-
-pm.openFile('/Users/johan/Documents/Projects/python_dev/scenes/rgb_cmy_mat.mb', f=True)
-curr_mat_list = [pm.PyNode('blinn{0}'.format(n+1)) for n in range(3)]
-new_mat_list = [pm.PyNode('lambert{0}'.format(n+2)) for n in range(3)]
-
-pm.select(curr_mat_list)
-win.add_selected_mat(win.curr_mat_model)
-
-pm.select(new_mat_list)
-win.add_selected_mat(win.new_mat_model)
 '''
