@@ -10,10 +10,16 @@ def maya_main_window():
 class NumberSortModel(QtGui.QSortFilterProxyModel):
 
     def lessThan(self, left, right):
-
-        c = QtCore.QLocale(QtCore.QLocale.C)
-        lvalue = c.toFloat(left.data())
-        rvalue = c.toFloat(right.data())
+        
+        if left.column() == 0:
+            c = QtCore.QLocale(QtCore.QLocale.C)
+            lvalue = c.toFloat(left.data())
+            rvalue = c.toFloat(right.data())
+        
+        else:
+            lvalue = left.data()
+            rvalue = right.data()
+        
         return lvalue < rvalue
   
   
@@ -32,6 +38,7 @@ class VrayIDWidget(QtGui.QWidget):
         
         # model
         self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['ID', 'Node'])
         
         self.proxy_model = NumberSortModel()
         self.proxy_model.setSourceModel(self.model)
@@ -52,18 +59,34 @@ class VrayIDWidget(QtGui.QWidget):
         v_header.setVisible(False)
         
         # set the font
-        font = QtGui.QFont("Courier New", 12)
-        self.tableview.setFont(font)
+        #font = QtGui.QFont("Courier New", 12)
+        #self.tableview.setFont(font)
         
         # hide grid
-        #self.tableview.setShowGrid(False)
+        self.tableview.setShowGrid(False)
         
         self.add_item()
         
     def add_item(self):
         
         for n in range(20):
+            
             item = QtGui.QStandardItem(str(n))
+            
+            if n % 4 == 0:
+                #item.setBackground(QtGui.QBrush(QtGui.QColor(250, 136, 14), QtCore.Qt.SolidPattern))
+                #item.setBackground(QtGui.QBrush(QtGui.QColor(250, 136, 14), QtCore.Qt.Dense7Pattern))
+                item.setBackground(QtGui.QBrush(QtGui.QColor(50, 103, 118), QtCore.Qt.SolidPattern))
+                #item.setText('item {0}'.format(n))
+                
+                #item.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
+                
+                #font = QtGui.QFont("Courier New", 12)
+                #font.setBold(True)
+                #item.setFont(font)
+        
+                
+                
             self.model.setItem(n, item)
         
 def show():
