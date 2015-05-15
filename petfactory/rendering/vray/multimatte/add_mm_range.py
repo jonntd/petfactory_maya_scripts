@@ -22,9 +22,20 @@ def add_multimate_range(num_multimatte):
         render_element.vray_blueid_multimatte.set(element_index*3+3)
         
 
-#add_multimate_range(9)
-
-
+def add_render_element(string_dict):
+    
+    # add render elements
+    render_element_dict = {}
+    
+    for render_element_name, class_name in render_element_string_dict.iteritems():
+        render_element_unicode = mel.eval('vrayAddRenderElement {0}'.format(class_name))
+        render_element = pm.PyNode(render_element_unicode)
+        render_element_dict[render_element_name] = render_element
+        render_element.setName(render_element_name)
+        
+    return render_element_dict
+        
+               
 
 def inspect_mm():
     
@@ -73,4 +84,18 @@ def inspect_mm():
     
 
 
-inspect_mm()
+#inspect_mm()
+#add_multimate_range(9)
+
+render_element_string_dict = {
+'lighting':'lightingChannel',
+'gi':'giChannel',
+'reflection':'reflectChannel',
+'refraction':'refractChannel',
+'specular':'specularChannel',
+'contact_ao':'ExtraTexElement'}
+
+add_render_element(render_element_string_dict)
+    
+    
+    
