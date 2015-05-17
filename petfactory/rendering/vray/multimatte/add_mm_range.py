@@ -3,23 +3,36 @@ import pymel.core as pm
 import pprint
 
 
-def add_multimate_range(num_multimatte):
+def add_multimate_range(num_multimatte, start_index=0, use_mat_id=True):
+    
+    ret_dict = {}
     
     for element_index in range(num_multimatte):
         
         render_element_unicode = mel.eval('vrayAddRenderElement MultiMatteElement')
         render_element = pm.PyNode(render_element_unicode)
         
-        name = 'multimatte_{0}_{1}'.format(element_index*3+1, element_index*3+3)
+        first_index = element_index*3 + start_index
         
+        name = 'multimatte_{0}_{1}_{2}'.format(first_index, first_index+1, first_index+2)
+        
+        if pm.objExists(name):
+            pm.warning('Render element "{0}" exists'.format(name))
+            name = '{}_dup'.format(name)
+            
         render_element.vray_name_multimatte.set(name)
         render_element.setName(name)
-      
-        render_element.vray_usematid_multimatte.set(1)
         
-        render_element.vray_redid_multimatte.set(element_index*3+1)
-        render_element.vray_greenid_multimatte.set(element_index*3+2)
-        render_element.vray_blueid_multimatte.set(element_index*3+3)
+        if use_mat_id:
+            render_element.vray_usematid_multimatte.set(1)
+        
+        render_element.vray_redid_multimatte.set(first_index)
+        render_element.vray_greenid_multimatte.set(first_index+1)
+        render_element.vray_blueid_multimatte.set(first_index+2)
+        
+        ret_dict[name] = render_element
+        
+    return ret_dict
         
 
 def add_render_element(string_dict):
@@ -83,10 +96,6 @@ def inspect_mm():
 
     
 
-
-#inspect_mm()
-#add_multimate_range(9)
-
 render_element_string_dict = {
 'lighting':'lightingChannel',
 'gi':'giChannel',
@@ -95,7 +104,13 @@ render_element_string_dict = {
 'specular':'specularChannel',
 'contact_ao':'ExtraTexElement'}
 
-add_render_element(render_element_string_dict)
-    
-    
-    
+# create some render elements
+render_element_dict = add_render_element(render_element_string_dict)
+
+# create the mm passes, add to the render_element_dict
+mm_dict = add_multimate_range(11, start_index=1)
+render_element_dict.update(mm_dict)
+
+#render_element_unicode = mel.eval('vrayRemoveRenderElement multimatte_1_3')
+
+#inspect_mm()
