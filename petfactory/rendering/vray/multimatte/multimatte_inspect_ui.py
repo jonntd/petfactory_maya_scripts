@@ -118,10 +118,17 @@ class MultimatteInspectWidget(QtGui.QWidget):
         v_header = self.tableview.verticalHeader()
         v_header.setVisible(False)
         
+        #self.populate_model()
+        
+        refresh_button = QtGui.QPushButton('Refresh')
+        refresh_button.clicked.connect(self.refresh_button_clicked)
+        main_vbox.addWidget(refresh_button)
+        
+        
+    def refresh_button_clicked(self):
+        
         self.populate_model()
-        
-        
-        
+                
 
         
            
