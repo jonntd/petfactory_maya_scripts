@@ -3,36 +3,23 @@ import pymel.core as pm
 import pprint
 
 
-def add_multimate_range(num_multimatte, start_index=0, use_mat_id=True):
-    
-    ret_dict = {}
+def add_multimate_range(num_multimatte):
     
     for element_index in range(num_multimatte):
         
         render_element_unicode = mel.eval('vrayAddRenderElement MultiMatteElement')
         render_element = pm.PyNode(render_element_unicode)
         
-        first_index = element_index*3 + start_index
+        name = 'multimatte_{0}_{1}'.format(element_index*3+1, element_index*3+3)
         
-        name = 'multimatte_{0}_{1}_{2}'.format(first_index, first_index+1, first_index+2)
-        
-        if pm.objExists(name):
-            pm.warning('Render element "{0}" exists'.format(name))
-            name = '{}_dup'.format(name)
-            
         render_element.vray_name_multimatte.set(name)
         render_element.setName(name)
+      
+        render_element.vray_usematid_multimatte.set(1)
         
-        if use_mat_id:
-            render_element.vray_usematid_multimatte.set(1)
-        
-        render_element.vray_redid_multimatte.set(first_index)
-        render_element.vray_greenid_multimatte.set(first_index+1)
-        render_element.vray_blueid_multimatte.set(first_index+2)
-        
-        ret_dict[name] = render_element
-        
-    return ret_dict
+        render_element.vray_redid_multimatte.set(element_index*3+1)
+        render_element.vray_greenid_multimatte.set(element_index*3+2)
+        render_element.vray_blueid_multimatte.set(element_index*3+3)
         
 
 def add_render_element(string_dict):
@@ -58,6 +45,10 @@ def inspect_mm():
     mat_id_list = []
     op_id_list = []
     
+    mat_id_dict = {}
+    op_id_dict = {}
+    object_id_dict = {}
+    
     
     for node in node_list:
         
@@ -72,29 +63,38 @@ def inspect_mm():
             mat_id_list.append(node)
             
     
-    #print(object_id_list)
-    if object_id_list: 
-        object_ids = [n.objectID.get() for n in object_id_list]
-        object_ids.sort()
-        print('object ids')
-        print(object_ids)
-        
-    #print(op_id_list)
+
+    if object_id_list:
+        for node in object_id_list:
+            object_id_dict[node.name()] = node.vrayObjectID.get()
+
+
     if op_id_list:
-        object_prop_ids = [n.objectID.get() for n in op_id_list]
-        object_prop_ids.sort()
-        print('op ids')
-        print(object_prop_ids.sort())
+        
+        for node in op_id_list:
+            op_id_dict[node.name()] = node.objectID.get()
        
-    #print(mat_id_list)
     if mat_id_list:
-        mat_ids = [n.vrayMaterialId.get() for n in mat_id_list]
-        mat_ids.sort()
-        print('mat ids')
-        print(mat_ids)
-        pprint.pprint([n for n in mat_id_list])
+        
+        for node in mat_id_list:
+            mat_id_dict[node.name()] = node.vrayMaterialId.get()
 
     
+    print(object_id_list)
+    print(op_id_dict)
+    print(mat_id_dict)
+
+    
+'''
+try:
+    inspect_mm()
+    
+except AttributeError as e:
+    pm.warning('Make sure that V-Ray is loaded', e)
+'''
+inspect_mm()  
+    
+#add_multimate_range(9)
 
 render_element_string_dict = {
 'lighting':'lightingChannel',
@@ -104,13 +104,7 @@ render_element_string_dict = {
 'specular':'specularChannel',
 'contact_ao':'ExtraTexElement'}
 
-# create some render elements
-render_element_dict = add_render_element(render_element_string_dict)
-
-# create the mm passes, add to the render_element_dict
-mm_dict = add_multimate_range(11, start_index=1)
-render_element_dict.update(mm_dict)
-
-#render_element_unicode = mel.eval('vrayRemoveRenderElement multimatte_1_3')
-
-#inspect_mm()
+#add_render_element(render_element_string_dict)
+    
+    
+    
