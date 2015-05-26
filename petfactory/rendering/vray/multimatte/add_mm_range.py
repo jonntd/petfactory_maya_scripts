@@ -45,6 +45,10 @@ def inspect_mm():
     mat_id_list = []
     op_id_list = []
     
+    mat_id_dict = {}
+    op_id_dict = {}
+    object_id_dict = {}
+    
     
     for node in node_list:
         
@@ -59,32 +63,37 @@ def inspect_mm():
             mat_id_list.append(node)
             
     
-    #print(object_id_list)
-    if object_id_list: 
-        object_ids = [n.objectID.get() for n in object_id_list]
-        object_ids.sort()
-        print('object ids')
-        print(object_ids)
-        
-    #print(op_id_list)
+
+    if object_id_list:
+        for node in object_id_list:
+            object_id_dict[node.name()] = node.vrayObjectID.get()
+
+
     if op_id_list:
-        object_prop_ids = [n.objectID.get() for n in op_id_list]
-        object_prop_ids.sort()
-        print('op ids')
-        print(object_prop_ids.sort())
+        
+        for node in op_id_list:
+            op_id_dict[node.name()] = node.objectID.get()
        
-    #print(mat_id_list)
     if mat_id_list:
-        mat_ids = [n.vrayMaterialId.get() for n in mat_id_list]
-        mat_ids.sort()
-        print('mat ids')
-        print(mat_ids)
-        pprint.pprint([n for n in mat_id_list])
+        
+        for node in mat_id_list:
+            mat_id_dict[node.name()] = node.vrayMaterialId.get()
 
     
+    print(object_id_list)
+    print(op_id_dict)
+    print(mat_id_dict)
 
-
-#inspect_mm()
+    
+'''
+try:
+    inspect_mm()
+    
+except AttributeError as e:
+    pm.warning('Make sure that V-Ray is loaded', e)
+'''
+inspect_mm()  
+    
 #add_multimate_range(9)
 
 render_element_string_dict = {
@@ -95,7 +104,7 @@ render_element_string_dict = {
 'specular':'specularChannel',
 'contact_ao':'ExtraTexElement'}
 
-add_render_element(render_element_string_dict)
+#add_render_element(render_element_string_dict)
     
     
     
