@@ -66,6 +66,22 @@ def maya_main_window():
     
     
 
+class NumberSortModel(QtGui.QSortFilterProxyModel):
+
+    def lessThan(self, left, right):
+        
+        if left.column() == 0:
+            c = QtCore.QLocale(QtCore.QLocale.C)
+            lvalue = c.toFloat(left.data())
+            rvalue = c.toFloat(right.data())
+        
+        else:
+            lvalue = left.data()
+            rvalue = right.data()
+        
+        return lvalue < rvalue
+        
+        
 class MultimatteInspectWidget(QtGui.QWidget):
  
     def __init__(self, parent=None):
@@ -73,7 +89,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
         super(MultimatteInspectWidget, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         
-        self.resize(300,400)
+        self.resize(400,400)
         self.setWindowTitle("Multimatte inspect")
         
         # layout
@@ -83,40 +99,71 @@ class MultimatteInspectWidget(QtGui.QWidget):
         
         # models
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(['Multimatte ID', 'Type', 'Node'])
+        self.model.setHorizontalHeaderLabels(['ID', ' ID Type', 'Node'])
+        
+        self.proxy_model = NumberSortModel()
+        self.proxy_model.setSourceModel(self.model)
         
         # tableviews
         self.tableview = QtGui.QTableView()
-        self.tableview.setModel(self.model)
         header = self.tableview.horizontalHeader()
         header.setStretchLastSection(True)
         main_vbox.addWidget(self.tableview)
+        self.tableview.setModel(self.proxy_model)
         self.tableview.setSortingEnabled(True)
+        
+        self.tableview.setColumnWidth(0,50)
+        self.tableview.setColumnWidth(1,140)
+        
+        v_header = self.tableview.verticalHeader()
+        v_header.setVisible(False)
         
         self.populate_model()
         
         
+        
+
+        
+           
     def populate_model(self):
         
         mm_dict = inspect_mm()
         
-        self.item_from_dict(mm_dict, 'material_id')
-        self.item_from_dict(mm_dict, 'object_properties_id')
-        self.item_from_dict(mm_dict, 'object_id')
+        material_id_dict = mm_dict.get('material_id')
+        object_properties_id_dict = mm_dict.get('object_properties_id') 
+        object_id_dict = mm_dict.get('object_id') 
+        
+        id_list = material_id_dict.values()
+        id_list.extend(object_properties_id_dict.values())
+        id_list.extend(object_id_dict.values())
+        
+        
+        id_duplicates = list(set([id for id in id_list if id_list.count(id) > 1]))
+        
+        self.item_from_dict(material_id_dict, 'material', id_duplicates)
+        self.item_from_dict(object_properties_id_dict, 'object properties', id_duplicates)
+        self.item_from_dict(object_id_dict, 'object', id_duplicates)
+        
+        
         
        
-    def item_from_dict(self, mm_dict, key):
+    def item_from_dict(self, mm_dict, type, id_duplicates):
         
-        mat_dict = mm_dict.get(key) 
+        #print(mm_dict, type)
+
 
         row = self.model.rowCount()
-        for k, v in mat_dict.iteritems():
+        for k, v in mm_dict.iteritems():
             
             item_id = QtGui.QStandardItem(str(v))
             item_id.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.model.setItem(row, 0, item_id)
             
-            item_type = QtGui.QStandardItem(key)
+            if v in id_duplicates:
+                item_id.setBackground(QtGui.QBrush(QtGui.QColor(50, 103, 118), QtCore.Qt.SolidPattern))
+                
+
+            item_type = QtGui.QStandardItem(type)
             item_type.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.model.setItem(row, 1, item_type)
             
