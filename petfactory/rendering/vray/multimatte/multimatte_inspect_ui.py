@@ -5,6 +5,7 @@ from functools import partial
 import pymel.core as pm
 import pprint
 
+import petfactory.util.verify as pet_verify
 
 def inspect_mm():
     
@@ -112,6 +113,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
         self.tableview.setModel(self.proxy_model)
         self.tableview.setSortingEnabled(True)
         
+        self.tableview.doubleClicked.connect(self.tableview_doubleclicked)
+        
         self.tableview.setColumnWidth(0,50)
         self.tableview.setColumnWidth(1,140)
         
@@ -131,6 +134,26 @@ class MultimatteInspectWidget(QtGui.QWidget):
                 
 
         
+    def tableview_doubleclicked(self, index):
+        
+        col = index.column()
+        
+        # if we did not click column 2 return
+        if col != 2:
+            return
+            
+        row = index.row()
+        
+        item = self.model.item(row, col)
+        node_string = item.text()
+        
+        node = pet_verify.to_pynode(node_string)
+        
+        if node is None:
+            return
+            
+        pm.select(node)
+
            
     def populate_model(self):
         
