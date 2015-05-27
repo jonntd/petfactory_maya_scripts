@@ -102,6 +102,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
         self.model = QtGui.QStandardItemModel()
         self.model.setHorizontalHeaderLabels(['ID', ' ID Type', 'Node'])
         
+        self.model.dataChanged.connect(self.data_changed)
+        
         self.proxy_model = NumberSortModel()
         self.proxy_model.setSourceModel(self.model)
         
@@ -126,15 +128,47 @@ class MultimatteInspectWidget(QtGui.QWidget):
         refresh_button = QtGui.QPushButton('Refresh')
         refresh_button.clicked.connect(self.refresh_button_clicked)
         main_vbox.addWidget(refresh_button)
-        
+            
         
     def refresh_button_clicked(self):
-        
+             
         self.populate_model()
                 
+    def data_changed(self, topLeft, bottomRight):
+        
+        #self.model.blockSignals(True)
+        
+        # get the row that was changed, from the proxy model
+        row = topLeft.row()
+        
+        # remap the index from the proxymodel to the source model
+        index = self.proxy_model.mapToSource(topLeft)
+        
+        # get the node text
+        item_node = self.model.item(row, 2)
+        
+        node_type = node = None
+        
+        if item_node is not None:
+            node_string = item_node.text()
+            node = pet_verify.to_pynode(node_string)
+        
+        # get the node text
+        node_type_item = self.model.item(row, 1)
+        
+        if node_type_item is not None:        
+            node_type = node_type_item.text()
 
         
-    def tableview_doubleclicked(self, index):
+        if node is not None and node_type is not None:
+            print(node, node_type)
+        
+        #self.model.blockSignals(False)
+        
+        
+    def tableview_doubleclicked(self, proxy_index):
+        
+        index = self.proxy_model.mapToSource(proxy_index)
         
         col = index.column()
         
@@ -157,7 +191,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
            
     def populate_model(self):
         
-        self.model.removeRows(0, self.model.rowCount())
+        self.model.removeRows(0, self.model.rowCount())        
         
         mm_dict = inspect_mm()
         
@@ -176,7 +210,9 @@ class MultimatteInspectWidget(QtGui.QWidget):
         self.item_from_dict(object_properties_id_dict, 'object properties', id_duplicates)
         self.item_from_dict(object_id_dict, 'object', id_duplicates)
         
-        
+        # sort the table view
+        self.tableview.sortByColumn(0, QtCore.Qt.AscendingOrder)
+                
         
        
     def item_from_dict(self, mm_dict, type, id_duplicates):
@@ -187,7 +223,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
         for k, v in mm_dict.iteritems():
             
             item_id = QtGui.QStandardItem(str(v))
-            item_id.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            item_id.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
             self.model.setItem(row, 0, item_id)
             
             if v in id_duplicates:
