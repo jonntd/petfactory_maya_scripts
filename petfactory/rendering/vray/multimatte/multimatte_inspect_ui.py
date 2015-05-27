@@ -134,6 +134,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
            
     def populate_model(self):
         
+        self.model.removeRows(0, self.model.rowCount())
+        
         mm_dict = inspect_mm()
         
         material_id_dict = mm_dict.get('material_id')
@@ -157,9 +159,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
     def item_from_dict(self, mm_dict, type, id_duplicates):
         
         #print(mm_dict, type)
-
-
-        row = self.model.rowCount()
+        row = self.model.rowCount()        
+        
         for k, v in mm_dict.iteritems():
             
             item_id = QtGui.QStandardItem(str(v))
