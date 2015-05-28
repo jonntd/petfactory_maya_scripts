@@ -67,19 +67,80 @@ def maya_main_window():
     
     
 
+class MyDelegate(QtGui.QItemDelegate):
+    
+    def __init__(self, parent=None):
+        super(MyDelegate, self).__init__(parent)
+        
+    def createEditor(self, parent, option, index):
+        
+        col = index.column()
+        
+        if col == 0:
+
+            spinbox = QtGui.QSpinBox(parent)
+            spinbox.setRange(0, 9999)
+            spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+            return spinbox
+        
+        else:
+            return QtGui.QLineEdit(parent)
+            
+            
+    def setModelData(self, editor, model, index):
+        
+        row = index.row()
+        col = index.column()
+        
+        if col == 0:
+           
+            # remp the index     
+            source_index = index.model().mapToSource(index)
+            source_model = index.model().sourceModel()
+            
+            source_row = source_index.row()
+            node_string = source_model.index(source_row, 2).data()
+            id_type_string = source_model.index(source_row, 1).data()
+
+            value = editor.value()
+            
+            pynode = pet_verify.to_pynode(node_string)
+            if pynode is not None:
+                
+                if id_type_string == 'object':
+                    pynode.vrayObjectID.set(value)                    
+                    
+                elif id_type_string == 'object properties':
+                    pynode.objectID.set(value)
+                    
+                elif id_type_string == 'material':
+                    pynode.vrayMaterialId.set(value)
+                    
+                model.setData(index, value)
+                
+            else:
+                pm.warning('Could not set the V-Ray ID')
+                return
+            
+        
+        else:
+            model.setData(index, editor.value())
+
+        
 class NumberSortModel(QtGui.QSortFilterProxyModel):
 
     def lessThan(self, left, right):
-        
+
         if left.column() == 0:
+            
             c = QtCore.QLocale(QtCore.QLocale.C)
-            lvalue = c.toFloat(left.data())
-            rvalue = c.toFloat(right.data())
-        
+            lvalue = c.toFloat(str(left.data()))
+            rvalue = c.toFloat(str(right.data()))
+            
         else:
             lvalue = left.data()
             rvalue = right.data()
-        
+                    
         return lvalue < rvalue
         
         
@@ -96,14 +157,11 @@ class MultimatteInspectWidget(QtGui.QWidget):
         # layout
         main_vbox = QtGui.QVBoxLayout()
         self.setLayout(main_vbox)
-        
-        
+                
         # models
         self.model = QtGui.QStandardItemModel()
         self.model.setHorizontalHeaderLabels(['ID', ' ID Type', 'Node'])
-        
-        self.model.dataChanged.connect(self.data_changed)
-        
+        #self.model.dataChanged.connect(self.data_changed)        
         self.proxy_model = NumberSortModel()
         self.proxy_model.setSourceModel(self.model)
         
@@ -117,8 +175,11 @@ class MultimatteInspectWidget(QtGui.QWidget):
         
         self.tableview.doubleClicked.connect(self.tableview_doubleclicked)
         
-        self.tableview.setColumnWidth(0,50)
+        self.tableview.setColumnWidth(0,60)
         self.tableview.setColumnWidth(1,140)
+        
+        self.tableview.setItemDelegate(MyDelegate(self.tableview))
+        
         
         v_header = self.tableview.verticalHeader()
         v_header.setVisible(False)
@@ -133,10 +194,9 @@ class MultimatteInspectWidget(QtGui.QWidget):
     def refresh_button_clicked(self):
              
         self.populate_model()
-                
+             
+    '''   
     def data_changed(self, topLeft, bottomRight):
-        
-        #self.model.blockSignals(True)
         
         # get the row that was changed, from the proxy model
         row = topLeft.row()
@@ -162,8 +222,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
         
         if node is not None and node_type is not None:
             print(node, node_type)
+    '''
         
-        #self.model.blockSignals(False)
         
         
     def tableview_doubleclicked(self, proxy_index):
@@ -223,6 +283,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
         for k, v in mm_dict.iteritems():
             
             item_id = QtGui.QStandardItem(str(v))
+            #item_id = QtGui.QStandardItem(v)
             item_id.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
             self.model.setItem(row, 0, item_id)
             
