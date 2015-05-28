@@ -102,7 +102,11 @@ class MyDelegate(QtGui.QItemDelegate):
             node_string = source_model.index(source_row, 2).data()
             id_type_string = source_model.index(source_row, 1).data()
 
+            old_value = index.data()            
             value = editor.value()
+            
+            item = source_model.itemFromIndex(source_index)
+            item.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))
             
             pynode = pet_verify.to_pynode(node_string)
             if pynode is not None:
