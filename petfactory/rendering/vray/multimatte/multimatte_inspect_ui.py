@@ -105,8 +105,6 @@ class MyDelegate(QtGui.QItemDelegate):
             old_value = index.data()            
             value = editor.value()
             
-            item = source_model.itemFromIndex(source_index)
-            item.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))
             
             pynode = pet_verify.to_pynode(node_string)
             if pynode is not None:
@@ -119,8 +117,23 @@ class MyDelegate(QtGui.QItemDelegate):
                     
                 elif id_type_string == 'material':
                     pynode.vrayMaterialId.set(value)
+                 
+                
+                dup_list = [ int(source_model.index(row, 0).data()) for row in range(source_model.rowCount())]
+                #print(dup_list)
+                                
+                item = source_model.itemFromIndex(source_index)
+                
+                if value in dup_list:
+                    print('in list')
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))
+                    
+                else:
+                    print('not in list')
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(150, 143, 118), QtCore.Qt.SolidPattern))
                     
                 model.setData(index, value)
+            
                 
             else:
                 pm.warning('Could not set the V-Ray ID')
@@ -276,7 +289,6 @@ class MultimatteInspectWidget(QtGui.QWidget):
         
         # sort the table view
         self.tableview.sortByColumn(0, QtCore.Qt.AscendingOrder)
-                
         
        
     def item_from_dict(self, mm_dict, type, id_duplicates):
