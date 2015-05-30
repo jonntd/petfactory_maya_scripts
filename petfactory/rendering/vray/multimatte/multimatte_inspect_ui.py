@@ -197,9 +197,26 @@ class MultimatteInspectWidget(QtGui.QWidget):
         self.resize(400,400)
         self.setWindowTitle("Multimatte inspect")
         
+        
+        # menu layout
+        menu_layout = QtGui.QVBoxLayout()
+        menu_layout.setContentsMargins(3,3,3,3)
+        self.setLayout(menu_layout)
+        
+        
+        self.menu_bar = QtGui.QMenuBar()
+        menu_layout.addWidget(self.menu_bar)
+        file_menu = self.menu_bar.addMenu('File')
+ 
+        self.set_active_action = QtGui.QAction('Save ID List', self)
+        self.set_active_action.triggered.connect(self.save_id_to_json)
+        file_menu.addAction(self.set_active_action)
+        
+        
         # layout
         main_vbox = QtGui.QVBoxLayout()
-        self.setLayout(main_vbox)
+        #self.setLayout(main_vbox)
+        menu_layout.addLayout(main_vbox)
                 
         # models
         self.model = QtGui.QStandardItemModel()
@@ -240,7 +257,16 @@ class MultimatteInspectWidget(QtGui.QWidget):
              
         self.populate_model()
                      
+    def save_id_to_json(self):
         
+        for row in range(self.model.rowCount()):
+            
+            # save tableview state instead
+            #index = self.proxy_model.mapToSource(proxy_index)
+            
+            id, type, node = self.model.item(row, 0), self.model.item(row, 1), self.model.item(row, 2)
+            print(int(id.text()), type.text(), node.text())
+            
     def tableview_doubleclicked(self, proxy_index):
         
         index = self.proxy_model.mapToSource(proxy_index)
