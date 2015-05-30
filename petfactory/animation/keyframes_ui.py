@@ -257,10 +257,11 @@ class ControlMainWindow(QtGui.QDialog):
 
         keyframes.write_data(sel, int(round(start_time)), int(round(end_time)), file_format, scale)
 
-'''
+
 def show():
     myWin = ControlMainWindow(parent=maya_main_window())
     myWin.show()
     
+'''   
 show()
 '''
