@@ -287,7 +287,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
         if node is None:
             return
             
-        pm.select(node)
+        pm.select(node, noExpand=True)
 
            
     def populate_model(self):
