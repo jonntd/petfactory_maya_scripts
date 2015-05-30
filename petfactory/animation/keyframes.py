@@ -564,22 +564,49 @@ def write_data(sel_list, frame_start, frame_end, file_format='json', scale=None)
         pm.warning('Select transform(s) and camera(s)')
         return
         
+        
     if file_format == 'world_to_camera_nk_copy':
-        print('world to camera')
+        #print('world to camera')
         do_remove_static_attr = False
         scale = None
         data_dict = None
         data_dict = ws_to_cam_build.build_world_to_camera_dict(sel_list, frame_start, frame_end)
-        pprint.pprint(data_dict)
+        #pprint.pprint(data_dict)
         
         if data_dict is None:
             pm.warning('could not get ws to cam')
             return
             
         anim_data = build_nuke_ws_to_cam_nodes(data_dict)
-        print(anim_data)
+        #print(anim_data)
         os.system("echo {0} | pbcopy".format('\'' + anim_data + '\''))
         return
+        
+        
+    elif file_format == 'world_to_camera_json':
+
+        do_remove_static_attr = False
+        scale = None
+        data_dict = None
+        data_dict = ws_to_cam_build.build_world_to_camera_dict(sel_list, frame_start, frame_end)
+        
+        if data_dict is None:
+            pm.warning('could not get ws to cam')
+            return
+            
+
+        anim_data = json.dumps(data_dict, sort_keys=True,indent=4, separators=(',', ': '))
+        
+        file_path = pm.fileDialog2(fileFilter='*.json', dialogStyle=2, fileMode=0)
+        
+        # open a file and write to disc
+        if file_path:
+            if isinstance(file_path, list): file_path = file_path[0]
+            f = open(file_path,'w')
+            f.write(anim_data)
+            f.close()
+ 
+        return        
         
     else:
         data_dict = build_anim_dict(sel_list, frame_start, frame_end)

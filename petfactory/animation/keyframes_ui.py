@@ -196,7 +196,7 @@ class ControlMainWindow(QtGui.QDialog):
         self.ui.use_start_end_RB.clicked.connect(self.click_radiobutton)
         self.ui.export_BTN.clicked.connect(self.click_export)
         
-        file_formats = ['world to camera', 'Maya / AE (.ma)', 'Nuke (.nk)', 'Nuke (copy to clipboard)', 'Data (.json)']
+        file_formats = ['world to cam (nk copy)', 'world to cam (json)', 'Maya / AE (.ma)', 'Nuke (.nk)', 'Nuke (copy to clipboard)', 'Data (.json)']
         self.ui.file_format_CB.addItems(file_formats)
 
         self.ui.scale_DSB.setValue(1.0)
@@ -235,21 +235,24 @@ class ControlMainWindow(QtGui.QDialog):
 
         if file_format_index is 0:
             file_format = 'world_to_camera_nk_copy'
-
+        
         elif file_format_index is 1:
+            file_format = 'world_to_camera_json'
+            
+        elif file_format_index is 2:
             file_format = 'ma'
 
-        elif file_format_index is 2:
+        elif file_format_index is 3:
             file_format = 'nk'
 
-        elif file_format_index is 3:
+        elif file_format_index is 4:
             file_format = 'nk_copy'
 
-        elif file_format_index is 4:
+        elif file_format_index is 5:
             file_format = 'json'
 
         print(file_format)
-
+        
         scale = self.ui.scale_DSB.value()
 
         if scale == 1.0:
@@ -261,7 +264,5 @@ class ControlMainWindow(QtGui.QDialog):
 def show():
     myWin = ControlMainWindow(parent=maya_main_window())
     myWin.show()
-    
-'''   
-show()
-'''
+
+#show()
