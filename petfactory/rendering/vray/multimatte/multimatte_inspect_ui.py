@@ -320,6 +320,7 @@ def show():
     win.show()
     return win
 
+'''
 try:
     win.close()
     
@@ -329,3 +330,4 @@ except NameError:
 
 win = show()
 win.move(100,150)
+'''
