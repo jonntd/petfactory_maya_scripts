@@ -94,18 +94,21 @@ class MyDelegate(QtGui.QItemDelegate):
         
         if col == 0:
            
-            # remp the index     
-            source_index = index.model().mapToSource(index)
-            source_model = index.model().sourceModel()
+            # remp the index                 
+            source_index = model.mapToSource(index)
+            source_model = model.sourceModel()
             
             source_row = source_index.row()
-            node_string = source_model.index(source_row, 2).data()
-            id_type_string = source_model.index(source_row, 1).data()
-
-            old_value = index.data()            
+            num_rows = source_model.rowCount()
+            
+            old_value = int(index.data())
             value = editor.value()
             
+            # get the type and node strings
+            node_string = source_model.index(source_row, 2).data()
+            id_type_string = source_model.index(source_row, 1).data()
             
+            # try to construct a PyNode
             pynode = pet_verify.to_pynode(node_string)
             if pynode is not None:
                 
@@ -117,23 +120,46 @@ class MyDelegate(QtGui.QItemDelegate):
                     
                 elif id_type_string == 'material':
                     pynode.vrayMaterialId.set(value)
-                 
                 
-                dup_list = [ int(source_model.index(row, 0).data()) for row in range(source_model.rowCount())]
-                #print(dup_list)
-                                
-                item = source_model.itemFromIndex(source_index)
-                
-                if value in dup_list:
-                    print('in list')
-                    item.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))
-                    
-                else:
-                    print('not in list')
-                    item.setBackground(QtGui.QBrush(QtGui.QColor(150, 143, 118), QtCore.Qt.SolidPattern))
-                    
+                # change the data in the model
                 model.setData(index, value)
-            
+                
+                # look for duplicates
+                value_list = [ int(source_model.index(row, 0).data()) for row in range(num_rows)]
+                count_new_id = value_list.count(value)
+                count_old_id = value_list.count(old_value)
+                
+                # no duplicates
+                if count_new_id == 1:
+                    
+                    item = source_model.itemFromIndex(source_index)
+                    item.setBackground(QtGui.QBrush())
+
+                else:                 
+                
+                    for row in range(num_rows):
+                                                
+                        i = model.index(row, 0)
+                        v = int(i.data())
+                                                
+                        if v == value:
+                            item = source_model.itemFromIndex(model.mapToSource(i))
+                            item.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))                    
+               
+                
+                # reset the bg color of items that hade the same id of the item that was changed,
+                # but is unique after the current item was changed
+                if count_old_id == 1:
+                    
+                    for row in range(num_rows):
+                                                
+                        i = model.index(row, 0)
+                        v = int(i.data())
+                                                
+                        if v == old_value:
+                            item = source_model.itemFromIndex(model.mapToSource(i))
+                            item.setBackground(QtGui.QBrush()) 
+
                 
             else:
                 pm.warning('Could not set the V-Ray ID')
@@ -167,7 +193,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
  
         super(MultimatteInspectWidget, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
-        
+                
         self.resize(400,400)
         self.setWindowTitle("Multimatte inspect")
         
@@ -192,6 +218,8 @@ class MultimatteInspectWidget(QtGui.QWidget):
         
         self.tableview.doubleClicked.connect(self.tableview_doubleclicked)
         
+        self.tableview.setAlternatingRowColors(True)
+        
         self.tableview.setColumnWidth(0,60)
         self.tableview.setColumnWidth(1,140)
         
@@ -211,37 +239,7 @@ class MultimatteInspectWidget(QtGui.QWidget):
     def refresh_button_clicked(self):
              
         self.populate_model()
-             
-    '''   
-    def data_changed(self, topLeft, bottomRight):
-        
-        # get the row that was changed, from the proxy model
-        row = topLeft.row()
-        
-        # remap the index from the proxymodel to the source model
-        index = self.proxy_model.mapToSource(topLeft)
-        
-        # get the node text
-        item_node = self.model.item(row, 2)
-        
-        node_type = node = None
-        
-        if item_node is not None:
-            node_string = item_node.text()
-            node = pet_verify.to_pynode(node_string)
-        
-        # get the node text
-        node_type_item = self.model.item(row, 1)
-        
-        if node_type_item is not None:        
-            node_type = node_type_item.text()
-
-        
-        if node is not None and node_type is not None:
-            print(node, node_type)
-    '''
-        
-        
+                     
         
     def tableview_doubleclicked(self, proxy_index):
         
@@ -293,18 +291,16 @@ class MultimatteInspectWidget(QtGui.QWidget):
        
     def item_from_dict(self, mm_dict, type, id_duplicates):
         
-        #print(mm_dict, type)
         row = self.model.rowCount()        
         
         for k, v in mm_dict.iteritems():
             
             item_id = QtGui.QStandardItem(str(v))
-            #item_id = QtGui.QStandardItem(v)
             item_id.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
             self.model.setItem(row, 0, item_id)
             
             if v in id_duplicates:
-                item_id.setBackground(QtGui.QBrush(QtGui.QColor(50, 103, 118), QtCore.Qt.SolidPattern))
+                item_id.setBackground(QtGui.QBrush(QtGui.QColor(150, 43, 118), QtCore.Qt.SolidPattern))
                 
 
             item_type = QtGui.QStandardItem(type)
