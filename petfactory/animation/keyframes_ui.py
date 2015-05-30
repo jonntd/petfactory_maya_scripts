@@ -231,22 +231,24 @@ class ControlMainWindow(QtGui.QDialog):
             end_time = self.ui.end_time_DSB.value()
         
         file_format_index = self.ui.file_format_CB.currentIndex()
-        
+
+
         if file_format_index is 0:
             file_format = 'world_to_camera_nk_copy'
-            
+
         elif file_format_index is 1:
-            file_format = 'nk'
-            
+            file_format = 'ma'
+
         elif file_format_index is 2:
-            file_format = 'nk_copy'
-            
+            file_format = 'nk'
+
         elif file_format_index is 3:
-            file_format = 'json'
-            
+            file_format = 'nk_copy'
+
         elif file_format_index is 4:
             file_format = 'json'
 
+        print(file_format)
 
         scale = self.ui.scale_DSB.value()
 
@@ -254,10 +256,11 @@ class ControlMainWindow(QtGui.QDialog):
             scale = None
 
         keyframes.write_data(sel, int(round(start_time)), int(round(end_time)), file_format, scale)
-        
 
+'''
 def show():
     myWin = ControlMainWindow(parent=maya_main_window())
     myWin.show()
     
 show()
+'''
