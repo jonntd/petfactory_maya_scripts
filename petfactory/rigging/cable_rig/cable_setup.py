@@ -54,7 +54,7 @@ def validate_cv_num(num_joints, cv_num):
 
 
 
-def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None, joint_u_list=None):
+def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None, joint_u_list=None, ctrl_size=1.0):
         
     crv_shape = crv.getShape()
     num_cvs = crv_shape.numCVs()
@@ -109,10 +109,10 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     end_matrix = matrix_from_u(crv=crv, start_u=max_u-.05, end_u=max_u, pos_u=max_u, up_vec=up_vec)
     
     # create start and end ctrl
-    ctrl_start = pet_ctrl.CreateCtrl.create_circle_arrow(name='{0}_start_ctrl'.format(name), size=1)
+    ctrl_start = pet_ctrl.CreateCtrl.create_circle_arrow(name='{0}_start_ctrl'.format(name), size=ctrl_size)
     ctrl_start.setMatrix(start_matrix)
     
-    ctrl_end = pet_ctrl.CreateCtrl.create_circle_arrow(name='{0}_end_ctrl'.format(name), size=1)
+    ctrl_end = pet_ctrl.CreateCtrl.create_circle_arrow(name='{0}_end_ctrl'.format(name), size=ctrl_size)
     ctrl_end.setMatrix(end_matrix)
    
     # build the linear curve 
@@ -130,6 +130,7 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
                                                         name=name,
                                                         move_ctrl=False)
     
+    
     # get some info from the strechy spring rig
     stretch_condition = stretchy_ik_dict['stretch_condition']
     stretch_distance_shape = stretchy_ik_dict['distance_shape']
@@ -137,6 +138,12 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     start_ctrl_hidden_grp = stretchy_ik_dict['start_ctrl_hidden_grp']
     end_ctrl_hidden_grp = stretchy_ik_dict['end_ctrl_hidden_grp']
     jont_chain_length = stretchy_ik_dict['total_jnt_length']
+    
+    
+    
+    # due to a bug, the joint group needs to be in worldspace. So we can disable inherits transform and parent const instead.
+    stretch_ik_jnt_grp.inheritsTransform.set(0)
+    pm.parentConstraint(ctrl_start, stretch_ik_jnt_grp, mo=False)
     
     
     # add the linear crv
@@ -361,7 +368,7 @@ def add_cable_bind_joints(crv, name, num_ik_joints, num_bind_joints, cable_radiu
     blender_attr_name_list = ['blendJoint1', 'blendJoint2', 'blendJoint3']
     blender_value_list = [.7, .4, .1]
         
-    cable_base_dict = cable_base_ik(crv=crv, num_joints=num_ik_joints, name=name, existing_hairsystem=existing_hairsystem, joint_u_list=joint_u_list)
+    cable_base_dict = cable_base_ik(crv=crv, num_joints=num_ik_joints, name=name, existing_hairsystem=existing_hairsystem, joint_u_list=joint_u_list, ctrl_size=cable_radius)
     
     if cable_base_dict is None:
         return None
@@ -637,7 +644,11 @@ setup_crv_list( crv_list,
                 joint_u_list)
 
 '''
-#cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None):
+
+#crv = pm.PyNode('curve1')
+#num_joints = 4
+#cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsystem=None, ctrl_size=1)
+
 #cable_base_ik(crv=crv_1, num_joints=num_ik_joints, name='curve_rig', up_axis=2, existing_hairsystem=existing_hairsystem)
 #cable_base_ik(crv=crv_1, num_joints=6, name='curve_rig', up_axis=2, existing_hairsystem=None)
 #pm.delete(crv_list)
