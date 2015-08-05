@@ -23,23 +23,6 @@ reload(pet_attr)
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
-    
-class MySpinboxDelegate(QtGui.QItemDelegate):
-    
-    def __init__(self, parent=None):
-        super(MySpinboxDelegate, self).__init__(parent)
-        
-    def createEditor(self, parent, option, index):
-        
-        row = index.row()
-        
-        spinbox = QtGui.QDoubleSpinBox(parent)
-        spinbox.setDecimals(4)
-        spinbox.setRange(0, 1.0)
-        spinbox.setSingleStep(.01)
-        spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
-        
-        return spinbox
 
 class CableSetupWidget(QtGui.QWidget):
  
@@ -140,7 +123,7 @@ class CableSetupWidget(QtGui.QWidget):
         
         # add_spinbox(label, parent_layout, min=None, max=None, default=None, double_spinbox=False):
         self.name_start_index_spinbox = simple_widget.add_spinbox(label='Name start index', parent_layout=rig_group_vert_layout, min=0, max=999)
-        self.cable_radius_spinbox = simple_widget.add_spinbox(label='Cable radius', parent_layout=rig_group_vert_layout, min=.1, max=999, default=1, double_spinbox=True)
+        self.cable_radius_spinbox = simple_widget.add_spinbox(label='Cable radius', parent_layout=rig_group_vert_layout, min=.1, max=999, default=1, double_spinbox=True, decimals=3)
         self.cable_axis_divisions_spinbox = simple_widget.add_spinbox(label='Cable axis divisions', parent_layout=rig_group_vert_layout, min=3, max=99, default=12)
         self.cable_ik_joints_spinbox = simple_widget.add_spinbox(label='Cable IK joints', parent_layout=rig_group_vert_layout, min=3, max=10, default=4)
         self.cable_ik_joints_spinbox.valueChanged.connect(self.number_of_joints_changed)

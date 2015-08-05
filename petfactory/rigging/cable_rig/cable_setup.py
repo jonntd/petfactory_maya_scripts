@@ -142,8 +142,8 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     
     
     # due to a bug, the joint group needs to be in worldspace. So we can disable inherits transform and parent const instead.
-    stretch_ik_jnt_grp.inheritsTransform.set(0)
-    pm.parentConstraint(ctrl_start, stretch_ik_jnt_grp, mo=False)
+    #stretch_ik_jnt_grp.inheritsTransform.set(0)
+    #pm.parentConstraint(ctrl_start, stretch_ik_jnt_grp, mo=False)
     
     
     # add the linear crv
@@ -270,6 +270,10 @@ def cable_base_ik(crv, num_joints, name='curve_rig', up_axis=2, existing_hairsys
     
     pm.parent(result_crv, output_curve, no_inherit_trans_grp)
     
+
+    main_grp.inheritsTransform.set(0)
+    pm.parent(stretch_ik_jnt_grp, main_grp)
+
     ret_dict = {}
     ret_dict['start_ctrl'] = ctrl_start
     ret_dict['end_ctrl'] = ctrl_end
