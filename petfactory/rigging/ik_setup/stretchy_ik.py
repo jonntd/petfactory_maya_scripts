@@ -19,7 +19,9 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     # add ik handle    
     ik_handle, ik_effector = pm.ikHandle(sj=ik_jnt_list[0], ee=ik_jnt_list[-1], n='{0}_ikh'.format(name), solver='ikSpringSolver')
     
-    ik_jnt_grp = pm.group(em=True, parent=start_ctrl, n='{0}_ik_jnt_grp'.format(name))
+    #ik_jnt_grp = pm.group(em=True, parent=start_ctrl, n='{0}_ik_jnt_grp'.format(name))
+    #main_grp = pm.group(em=True, n='{0}_main_grp'.format(name))
+    ik_jnt_grp = pm.group(em=True, n='{0}_ik_jnt_grp'.format(name))
     start_ctrl_hidden_grp = pm.group(em=True, parent=start_ctrl, n='{0}_start_ctrl_hidden_grp'.format(name))
     end_ctrl_hidden_grp = pm.group(em=True, parent=end_ctrl, n='{0}_end_ctrl_hidden_grp'.format(name))
     
@@ -74,7 +76,7 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
         stretch_cnd.outColorR >> jnt_choice.selector
         jnt_choice.output >> jnt.tx
     
-    
+    '''
     # add polevector
     vec_prod = pm.createNode('vectorProduct', n='{0}_polevec_vp'.format(name))
     # the pole vector expects a vector, so we set the operation to vector matrix product
@@ -82,6 +84,7 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     start_ctrl.worldMatrix[0] >> vec_prod.matrix
     vec_prod.input1.set(0,0,1)
     vec_prod.output >> ik_handle.poleVector
+    '''
     
     pm.addAttr(start_ctrl, ln='ik_twist', at='double', k=True, defaultValue=0)
     pm.addAttr(start_ctrl, ln='ik_twist_offset', at='double', k=False, defaultValue=0)
@@ -92,13 +95,29 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     start_ctrl.ik_twist_offset >> ik_twist_pma.input1D[0]
     start_ctrl.ik_twist >> ik_twist_pma.input1D[1]
     ik_twist_pma.output1D >> ik_handle.twist
+
+    
+    # add "physical" polevector
+    pv_loc = pm.spaceLocator(n='{0}_PV_loc'.format(name))
+    pm.poleVectorConstraint(pv_loc, ik_handle)
+    pm.parent(pv_loc, start_ctrl)
+    pv_loc.translate.set(0,0,1)
+    start_ctrl.ik_twist_offset.set(-90)
+
+    
     
     pm.parent(ik_jnt_list[0], ik_jnt_grp)
     pm.setAttr(start_ctrl_hidden_grp.v, 0, lock=True)
     pm.setAttr(end_ctrl_hidden_grp.v, 0, lock=True)
     
+    # fix ikSpring bug
+    ik_jnt_grp.inheritsTransform.set(0)
+    pm.parentConstraint(start_ctrl, ik_jnt_list[0], mo=True)
+    
+    #pm.parent(start_ctrl, end_ctrl,ik_jnt_grp, main_grp)
+    
     ret_dict['stretch_condition'] = stretch_cnd
-    ret_dict['vector_product'] = vec_prod
+    #ret_dict['vector_product'] = vec_prod
     ret_dict['distance_shape'] = dist
     ret_dict['ik_handle'] = ik_handle
     ret_dict['total_jnt_length'] = total_jnt_length
@@ -108,22 +127,8 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     ret_dict['stretch_per_jnt_md'] = stretch_per_jnt_md
     
     return ret_dict
-'''
-pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/spring_jnts.mb', f=True)
-
-name = 'cable_rig'
-ik_jnt_list = [pm.PyNode('joint{0}'.format(j+1)) for j in range(5)]
-
-# create the ctrl
-start_ctrl = pm.circle(n='{0}_start_ctrl'.format(name), ch=False)[0]
-end_ctrl = pm.circle(n='{0}_end_ctrl'.format(name), ch=False)[0]
 
 
-create_ik_spring(   ik_jnt_list=ik_jnt_list,
-                    start_ctrl=start_ctrl,
-                    end_ctrl=end_ctrl,
-                    name=name)
-'''
 
 def add_linear_stretch_crv(ik_jnt_list, spring_ik_dict, num_div, name):
     
@@ -315,18 +320,18 @@ def create_ik_rp(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     ret_dict['end_ctrl_hidden_grp'] = end_ctrl_hidden_grp
     
     return ret_dict
+    
 '''
-pm.system.openFile('/Users/johan/Documents/Projects/python_dev/scenes/spring_3_jnts.mb', f=True)
-
+pm.openFile("/Users/johan/Documents/projects/bot_pustervik/scenes/ref/jnt4.mb", f=True)
 name = 'cable_rig'
-ik_jnt_list = [pm.PyNode('joint{0}'.format(j+1)) for j in range(3)]
+ik_jnt_list = [pm.PyNode('joint{0}'.format(j+1)) for j in range(4)]
 
 # create the ctrl
 start_ctrl = pm.circle(n='{0}_start_ctrl'.format(name), ch=False)[0]
 end_ctrl = pm.circle(n='{0}_end_ctrl'.format(name), ch=False)[0]
 
 
-create_ik_rp(   ik_jnt_list=ik_jnt_list,
+create_ik_spring(   ik_jnt_list=ik_jnt_list,
                 start_ctrl=start_ctrl,
                 end_ctrl=end_ctrl,
                 name=name)

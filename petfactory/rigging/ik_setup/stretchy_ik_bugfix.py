@@ -20,6 +20,7 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     ik_handle, ik_effector = pm.ikHandle(sj=ik_jnt_list[0], ee=ik_jnt_list[-1], n='{0}_ikh'.format(name), solver='ikSpringSolver')
     
     #ik_jnt_grp = pm.group(em=True, parent=start_ctrl, n='{0}_ik_jnt_grp'.format(name))
+    main_grp = pm.group(em=True, n='{0}_main_grp'.format(name))
     ik_jnt_grp = pm.group(em=True, n='{0}_ik_jnt_grp'.format(name))
     start_ctrl_hidden_grp = pm.group(em=True, parent=start_ctrl, n='{0}_start_ctrl_hidden_grp'.format(name))
     end_ctrl_hidden_grp = pm.group(em=True, parent=end_ctrl, n='{0}_end_ctrl_hidden_grp'.format(name))
@@ -83,6 +84,7 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     start_ctrl.worldMatrix[0] >> vec_prod.matrix
     vec_prod.input1.set(0,0,1)
     vec_prod.output >> ik_handle.poleVector
+    '''
     
     pm.addAttr(start_ctrl, ln='ik_twist', at='double', k=True, defaultValue=0)
     pm.addAttr(start_ctrl, ln='ik_twist_offset', at='double', k=False, defaultValue=0)
@@ -93,7 +95,16 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     start_ctrl.ik_twist_offset >> ik_twist_pma.input1D[0]
     start_ctrl.ik_twist >> ik_twist_pma.input1D[1]
     ik_twist_pma.output1D >> ik_handle.twist
-    '''
+
+    
+    # add "physical" polevector
+    pv_loc = pm.spaceLocator(n='{0}_PV_loc'.format(name))
+    pm.poleVectorConstraint(pv_loc, ik_handle)
+    pm.parent(pv_loc, start_ctrl)
+    pv_loc.translate.set(0,0,1)
+    start_ctrl.ik_twist_offset.set(-90)
+
+    
     
     pm.parent(ik_jnt_list[0], ik_jnt_grp)
     pm.setAttr(start_ctrl_hidden_grp.v, 0, lock=True)
@@ -102,6 +113,8 @@ def create_ik_spring(ik_jnt_list, start_ctrl, end_ctrl, name, move_ctrl=True):
     # fix ikSpring bug
     ik_jnt_grp.inheritsTransform.set(0)
     pm.parentConstraint(start_ctrl, ik_jnt_list[0], mo=True)
+    
+    pm.parent(start_ctrl, end_ctrl,ik_jnt_grp, main_grp)
     
     ret_dict['stretch_condition'] = stretch_cnd
     #ret_dict['vector_product'] = vec_prod
