@@ -24,6 +24,24 @@ def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
 
+class MySpinboxDelegate(QtGui.QItemDelegate):
+
+    def __init__(self, parent=None):
+        super(MySpinboxDelegate, self).__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        
+        row = index.row()
+
+        spinbox = QtGui.QDoubleSpinBox(parent)
+        spinbox.setDecimals(4)
+        spinbox.setRange(0, 1.0)
+        spinbox.setSingleStep(.01)
+        spinbox.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+
+        return spinbox
+
+
 class CableSetupWidget(QtGui.QWidget):
  
     def __init__(self, parent=None):
