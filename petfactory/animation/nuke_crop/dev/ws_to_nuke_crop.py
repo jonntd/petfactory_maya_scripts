@@ -32,7 +32,7 @@ def WorldPositionToImageCoordinate(cameraName, imageXRes, imageYRes, worldX, wor
     return imageX, imageY
         
     
-def ws_to_screen(vec_list, sel_list, frame_start, frame_end):
+def ws_to_screen(sel_list, pos_list, frame_start, frame_end):
     
     width = 1920
     height = 1080
@@ -49,11 +49,15 @@ def ws_to_screen(vec_list, sel_list, frame_start, frame_end):
     
     curr_time = pm.currentTime(q=True)
     
-    #print(sel_list[0].shortName())
-    
-    ret_list = [[] for x in sel_list]
-    
+    ret_dict = {}
+    info_dict = {}
+    ret_dict['info'] = info_dict
+    node_list = []
+    ret_dict['node_list'] = node_list
 
+    # crete a list to store the pos for each object
+    vec_list = [[] for x in sel_list]
+    
     # step through the timeline
     for frame in range(frame_start, frame_end+1):
         
@@ -62,23 +66,32 @@ def ws_to_screen(vec_list, sel_list, frame_start, frame_end):
         for index, sel in enumerate(sel_list):
             
             m = sel_list[index].getMatrix(ws=True)
-            crop_vec_list = [(v*m)[:3] for v in vec_list]
+            # mult the vec from the pos_lsi with the matrix of each object, slice the first 3 vec (skip thw w component)
+            crop_vec_list = [(v*m)[:3] for v in pos_list]
         
             p_list = []
             for vec in crop_vec_list:
                 
                 # VISUAL DEBUG
-                #sp = pm.polySphere(r=.2, ch=False)[0]
-                #sp.translate.set((vec[0], vec[1], vec[2]))
+                sp = pm.polySphere(r=.2, ch=False)[0]
+                sp.translate.set((vec[0], vec[1], vec[2]))
                 p_list.append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=vec[0], worldY=vec[1], worldZ=vec[2]))
                 
             
-            ret_list[index].append(p_list)   
+            vec_list[index].append(p_list)   
         
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
     
-    return ret_list
+    for index, sel in enumerate(sel_list):
+        
+        node = {}
+        node['name'] = sel.shortName()
+        node['verts'] = vec_list[index]
+        node_list.append(node)
+        
+    
+    return ret_dict
     
 
 
@@ -93,10 +106,11 @@ def get_curve_string(an_attr_list):
     return s
     
 
-def get_node(x, y, r, t):
+def get_node(x, y, r, t, name):
 
     s = 'Crop {\n'
     s += '\tinputs 0'
+    s += '\tname {0}'.format(name)
     s += '\tbox {\n'
     s += '\t\t{0}\n'.format(get_curve_string(x))
     s += '\t\t{0}\n'.format(get_curve_string(y))
@@ -109,31 +123,37 @@ def get_node(x, y, r, t):
     
     
        
-def get_nuke_crop(vec_list, sel_list, frame_start, frame_end):
+def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     
-    node_list = ws_to_screen(vec_list, sel_list, frame_start, frame_end)
-    #pprint.pprint(node_list)
+    node_dict = ws_to_screen(sel_list, pos_list, frame_start, frame_end)
+    node_dict_list = node_dict.get('node_list')
     
-    offset = 10
+    offset = 20
     crop_list = []
     cmd_string = ''
     
-    for p_list in node_list:
+    for node_dict in node_dict_list:
+        
+        vert_list = node_dict.get('verts')
+        name = node_dict.get('name')
         
         x = []
         y = []
         r = []
         t = []
-        for p in p_list:
-            px, py = zip(*p)
+            
+        for vert in vert_list:
+
+            px, py = zip(*vert)
             x.append(min(px)-offset)
             y.append(min(py)-offset)
             r.append(max(px)+offset)
             t.append(max(py)+offset)
-            
 
-        cmd_string += get_node(x, y, r, t)
-        
+                
+        cmd_string += get_node(x, y, r, t, name)
+
+            
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
         
         
@@ -144,10 +164,10 @@ def get_nuke_crop(vec_list, sel_list, frame_start, frame_end):
 
 
 
-x_pos = 1
-x_neg = -1
-y_pos = 1
-y_neg = -1
+x_pos = 2
+x_neg = -2
+y_pos = 2
+y_neg = -2
 
 # declare once
 vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
@@ -159,4 +179,4 @@ loc1 = pm.PyNode('|locator1')
 loc2 = pm.PyNode('|locator2')
 
 
-get_nuke_crop(sel_list=[loc1, loc2], vec_list=vec_list, frame_start=0, frame_end=24)
+get_nuke_crop(sel_list=[loc1, loc2], pos_list=vec_list, frame_start=0, frame_end=120)
