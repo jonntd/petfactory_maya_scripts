@@ -56,6 +56,8 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
     ret_dict['info'] = info_dict
     node_list = []
     ret_dict['node_list'] = node_list
+    ret_dict['frame_start'] = frame_start
+    ret_dict['fps'] = 25
 
 
     # crete a list to store the pos for each object
@@ -108,27 +110,27 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
     
 
 
-def get_curve_string(an_attr_list):
+def get_curve_string(an_attr_list, frame_start):
     
     s = '{ curve '
     
-    for index, val in enumerate(an_attr_list): s += 'x{0} {1} '.format(index, val)
+    for index, val in enumerate(an_attr_list): s += 'x{0} {1} '.format(frame_start+index, val)
     
     s += '}'
     
     return s
     
 
-def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y):
+def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start):
 
     s = 'Crop {\n'
     s += '\tinputs 0'
     s += '\tname {0}'.format(name)
     s += '\tbox {\n'
-    s += '\t\t{0}\n'.format(get_curve_string(x))
-    s += '\t\t{0}\n'.format(get_curve_string(y))
-    s += '\t\t{0}\n'.format(get_curve_string(r))
-    s += '\t\t{0}\n'.format(get_curve_string(t))
+    s += '\t\t{0}\n'.format(get_curve_string(x, frame_start))
+    s += '\t\t{0}\n'.format(get_curve_string(y, frame_start))
+    s += '\t\t{0}\n'.format(get_curve_string(r, frame_start))
+    s += '\t\t{0}\n'.format(get_curve_string(t, frame_start))
     s+= '\t}\n'
     s+= '}\n'
 
@@ -136,8 +138,8 @@ def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y):
     s += '\tinputs 0'
     #s += '\tname {0}'.format(name)
     s += '\tvol_pos {\n'
-    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_x))
-    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_y))
+    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_x, frame_start))
+    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_y, frame_start))
     s+= '\t}\n'
     s+= '}\n'
     
@@ -148,13 +150,15 @@ def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y):
        
 def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     
-    z_offset = 5
+    z_offset = 3
     node_dict = ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end)
     node_dict_list = node_dict.get('node_list')
     
+    frame_start = node_dict.get('frame_start')
+    
     #pprint.pprint(node_dict_list)
     
-    offset = 20
+    offset = 0
     crop_list = []
     cmd_string = ''
     
@@ -163,6 +167,7 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
         vert_list = node_dict.get('verts')
         z_offset_list = node_dict.get('z_offset')
         name = node_dict.get('name')
+        
         
         x = []
         y = []
@@ -179,7 +184,7 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
             t.append(max(py)+offset)
 
                 
-        cmd_string += get_node(x, y, r, t, name, vol_pos_x, vol_pos_y)
+        cmd_string += get_node(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start)
 
             
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
@@ -192,10 +197,10 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
 
 
 
-x_pos = 2
-x_neg = -2
-y_pos = 2
-y_neg = -2
+x_pos = 1
+x_neg = -1
+y_pos = 1
+y_neg = -1
 
 # declare once
 vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
@@ -204,7 +209,7 @@ vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
                 pm.datatypes.VectorN(x_pos ,y_neg, 0, 1)]
 
 loc1 = pm.PyNode('|locator1')
-loc2 = pm.PyNode('|locator2')
+#loc2 = pm.PyNode('|locator2')
 
 
-get_nuke_crop(sel_list=[loc1, loc2], pos_list=vec_list, frame_start=0, frame_end=120)
+get_nuke_crop(sel_list=[loc1], pos_list=vec_list, frame_start=1, frame_end=100)
