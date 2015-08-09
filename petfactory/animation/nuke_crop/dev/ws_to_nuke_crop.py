@@ -32,10 +32,12 @@ def WorldPositionToImageCoordinate(cameraName, imageXRes, imageYRes, worldX, wor
     return imageX, imageY
         
     
-def ws_to_screen(sel_list, pos_list, frame_start, frame_end):
+def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
     
     width = 1920
     height = 1080
+    vec_z = pm.datatypes.VectorN(0, 0, z_offset, 1)
+    vec_c = pm.datatypes.VectorN(0, 0, 0, 1)
     
     # first lets see if we can get the current camera
     try:
@@ -55,8 +57,11 @@ def ws_to_screen(sel_list, pos_list, frame_start, frame_end):
     node_list = []
     ret_dict['node_list'] = node_list
 
+
     # crete a list to store the pos for each object
     vec_list = [[] for x in sel_list]
+    center_list = [[] for x in sel_list]
+    z_offset_list = [[] for x in sel_list]
     
     # step through the timeline
     for frame in range(frame_start, frame_end+1):
@@ -73,12 +78,17 @@ def ws_to_screen(sel_list, pos_list, frame_start, frame_end):
             for vec in crop_vec_list:
                 
                 # VISUAL DEBUG
-                sp = pm.polySphere(r=.2, ch=False)[0]
-                sp.translate.set((vec[0], vec[1], vec[2]))
+                #sp = pm.polySphere(r=.2, ch=False)[0]
+                #sp.translate.set((vec[0], vec[1], vec[2]))
                 p_list.append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=vec[0], worldY=vec[1], worldZ=vec[2]))
                 
+            vec_list[index].append(p_list)
+                        
+            cm = (vec_c*m)[:3]
+            zm = (vec_z*m)[:3]
             
-            vec_list[index].append(p_list)   
+            center_list[index].append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=cm[0], worldY=cm[1], worldZ=cm[2]))
+            z_offset_list[index].append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=zm[0], worldY=zm[1], worldZ=zm[2]))
         
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
@@ -88,6 +98,9 @@ def ws_to_screen(sel_list, pos_list, frame_start, frame_end):
         node = {}
         node['name'] = sel.shortName()
         node['verts'] = vec_list[index]
+        node['center'] = center_list[index]
+        node['z_offset'] = z_offset_list[index]
+        
         node_list.append(node)
         
     
@@ -106,7 +119,7 @@ def get_curve_string(an_attr_list):
     return s
     
 
-def get_node(x, y, r, t, name):
+def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y):
 
     s = 'Crop {\n'
     s += '\tinputs 0'
@@ -119,14 +132,27 @@ def get_node(x, y, r, t, name):
     s+= '\t}\n'
     s+= '}\n'
 
+    s += 'VolumeRays {\n'
+    s += '\tinputs 0'
+    #s += '\tname {0}'.format(name)
+    s += '\tvol_pos {\n'
+    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_x))
+    s += '\t\t{0}\n'.format(get_curve_string(vol_pos_y))
+    s+= '\t}\n'
+    s+= '}\n'
+    
+    
     return s
     
     
        
 def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     
-    node_dict = ws_to_screen(sel_list, pos_list, frame_start, frame_end)
+    z_offset = 5
+    node_dict = ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end)
     node_dict_list = node_dict.get('node_list')
+    
+    #pprint.pprint(node_dict_list)
     
     offset = 20
     crop_list = []
@@ -135,12 +161,14 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     for node_dict in node_dict_list:
         
         vert_list = node_dict.get('verts')
+        z_offset_list = node_dict.get('z_offset')
         name = node_dict.get('name')
         
         x = []
         y = []
         r = []
         t = []
+        vol_pos_x, vol_pos_y = zip(*z_offset_list)
             
         for vert in vert_list:
 
@@ -151,7 +179,7 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
             t.append(max(py)+offset)
 
                 
-        cmd_string += get_node(x, y, r, t, name)
+        cmd_string += get_node(x, y, r, t, name, vol_pos_x, vol_pos_y)
 
             
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
