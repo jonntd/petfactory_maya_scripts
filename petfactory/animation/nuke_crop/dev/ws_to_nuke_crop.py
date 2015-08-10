@@ -121,10 +121,12 @@ def get_curve_string(an_attr_list, frame_start):
     return s
     
 
-def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start):
+def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, index):
 
     s = 'Crop {\n'
     s += '\tinputs 0'
+    s += '\txpos {0}'.format(index * 100)
+    s += '\typos {0}'.format(0)
     s += '\tname {0}'.format(name)
     s += '\tbox {\n'
     s += '\t\t{0}\n'.format(get_curve_string(x, frame_start))
@@ -135,13 +137,40 @@ def get_node(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start):
     s+= '}\n'
 
     s += 'VolumeRays {\n'
-    s += '\tinputs 0'
+    #s += '\tinputs 0'
+    s += '\txpos {0}'.format(index * 100)
+    s += '\typos {0}'.format(75)
     #s += '\tname {0}'.format(name)
     s += '\tvol_pos {\n'
     s += '\t\t{0}\n'.format(get_curve_string(vol_pos_x, frame_start))
     s += '\t\t{0}\n'.format(get_curve_string(vol_pos_y, frame_start))
     s+= '\t}\n'
     s+= '}\n'
+    
+    s+= 'set a [stack 0]\n'
+    
+    if index == 0:
+        s += 'Dot {\n'
+        #s += '\tinputs 0'
+        s += '\txpos {0}'.format(35)
+        s += '\typos {0}'.format(163)
+        s+= '}\n'
+        
+        s+= 'set b [stack 0]\n'
+        
+        return s
+    
+    s += 'push $a\n'
+    s += 'push $b\n'
+    
+    s += 'Merge2 {\n'
+    s += '\tinputs 2'
+    s += '\toperation plus'
+    s += '\txpos {0}'.format(index * 100)
+    s += '\typos {0}'.format(160)
+    s+= '}\n'
+    
+    s+= 'set b [stack 0]\n'
     
     
     return s
@@ -162,7 +191,7 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     crop_list = []
     cmd_string = ''
     
-    for node_dict in node_dict_list:
+    for index, node_dict in enumerate(node_dict_list):
         
         vert_list = node_dict.get('verts')
         z_offset_list = node_dict.get('z_offset')
@@ -184,7 +213,7 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
             t.append(max(py)+offset)
 
                 
-        cmd_string += get_node(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start)
+        cmd_string += build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, index)
 
             
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
@@ -208,8 +237,9 @@ vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
                 pm.datatypes.VectorN(x_neg ,y_neg, 0, 1),
                 pm.datatypes.VectorN(x_pos ,y_neg, 0, 1)]
 
-loc1 = pm.PyNode('|locator1')
+#loc1 = pm.PyNode('|locator1')
 #loc2 = pm.PyNode('|locator2')
+sel_list = pm.ls(sl=True)
 
 
-get_nuke_crop(sel_list=[loc1], pos_list=vec_list, frame_start=1, frame_end=100)
+get_nuke_crop(sel_list=sel_list, pos_list=vec_list, frame_start=1, frame_end=1)
