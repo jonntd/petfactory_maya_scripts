@@ -122,9 +122,12 @@ def get_curve_string(an_attr_list, frame_start):
     
 
 def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, index):
-
-    s = 'Crop {\n'
-    s += '\tinputs 0'
+    
+    # hook up to the main dot node, defined outside of this def
+    s = 'push $main\n'
+        
+    s += 'Crop {\n'
+    s += '\tinputs 1'
     s += '\txpos {0}'.format(index * 100)
     s += '\typos {0}'.format(0)
     s += '\tname {0}'.format(name)
@@ -189,7 +192,12 @@ def get_nuke_crop(sel_list, pos_list, frame_start, frame_end):
     
     offset = 0
     crop_list = []
-    cmd_string = ''
+    cmd_string = 'Dot {\n'
+    cmd_string += '\tinputs 0'
+    cmd_string += '\txpos {35}'
+    cmd_string += '\typos {-50}'
+    cmd_string+= '}\n'
+    cmd_string+= 'set main [stack 0]\n'
     
     for index, node_dict in enumerate(node_dict_list):
         
@@ -242,4 +250,4 @@ vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
 sel_list = pm.ls(sl=True)
 
 
-get_nuke_crop(sel_list=sel_list, pos_list=vec_list, frame_start=1, frame_end=1)
+get_nuke_crop(sel_list=sel_list, pos_list=vec_list, frame_start=1, frame_end=100)
