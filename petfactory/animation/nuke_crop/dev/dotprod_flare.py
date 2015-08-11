@@ -68,6 +68,8 @@ def ws_to_screen(sel_list, frame_start, frame_end):
         
         pm.currentTime(frame, update=True, edit=True)
         
+        cam_z = pm.datatypes.Vector(current_cam.getMatrix()[2][:3]).normal()
+        
         for index, sel in enumerate(sel_list):
             
             #m = sel_list[index].getMatrix(ws=True)
@@ -78,8 +80,11 @@ def ws_to_screen(sel_list, frame_start, frame_end):
                                                                     worldX=pos[0],
                                                                     worldY=pos[1],
                                                                     worldZ=pos[2]))
+                                                                    
+            loc_z = pm.datatypes.Vector(sel_list[index].getMatrix()[2][:3]).normal()
             
-            dotprod_list[index].append(math.sin(frame*.1)*2)
+            #dotprod_list[index].append(math.sin(frame*.1)*2)
+            dotprod_list[index].append(cam_z.dot(loc_z))
 
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
@@ -110,6 +115,7 @@ def get_curve_string(an_attr_list, frame_start):
 
 def build_nuke_pasteboard(x, y, dotprod, name, frame_start, index):
 
+    # lerp(.3,0,1,1,curve)
         
     s = 'Transform {\n'
     s += '\tinputs 0'
