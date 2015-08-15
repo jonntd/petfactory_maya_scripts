@@ -236,6 +236,18 @@ class CurveCanvas(QtGui.QWidget):
     def change_max(self, val):
         self.max = val
 
-win = Widget(parent=maya_main_window())
-win.show()
-win.move(100,250)
+def show():
+    win = Widget(parent=maya_main_window())
+    win.show()
+    return win
+
+'''
+try:
+    win.close()
+    
+except NameError:
+    print('No win to close')
+    
+win = show()
+win.move(100,150)
+'''
