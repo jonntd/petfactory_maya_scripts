@@ -131,15 +131,20 @@ def build_nuke_pasteboard(x, y, dotprod, name, frame_start, index):
     s+= '\t}\n'
     s+= '}\n'
 
-
-    
-    
     return s
+
+
+def get_dot_prod():
     
-    
-       
-def get_nuke_crop(sel_list, frame_start, frame_end):
-    
+    sel_list = pm.ls(sl=True)
+
+    if len(sel_list < 1):
+        pm.warning('Nothing is selected!')
+        return
+
+    frame_start = 0
+    frame_end = 0
+
     node_dict = ws_to_screen(sel_list, frame_start, frame_end)
     node_dict_list = node_dict.get('node_list')    
     frame_start = node_dict.get('frame_start')
@@ -158,12 +163,4 @@ def get_nuke_crop(sel_list, frame_start, frame_end):
                 
         cmd_string += build_nuke_pasteboard(x, y, dotprod, name, frame_start, index)
 
-            
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
-        
-        
-
-        
-
-sel_list = pm.ls(sl=True)
-get_nuke_crop(sel_list=sel_list, frame_start=1, frame_end=100)

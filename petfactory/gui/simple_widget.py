@@ -11,13 +11,13 @@ import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
 
 '''
-def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_spinbox=False, decimals=2):
+def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_spinbox=False, decimals=2, singlestep=None, label_width=100):
     
     horiz_layout = QtGui.QHBoxLayout()
     parent_layout.addLayout(horiz_layout)
 
     label = QtGui.QLabel(label)
-    label.setMinimumWidth(100)
+    label.setMinimumWidth(label_width)
     horiz_layout.addWidget(label)
 
     horiz_layout.addStretch()
@@ -25,9 +25,13 @@ def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_s
     if double_spinbox:
         spinbox = QtGui.QDoubleSpinBox()
         spinbox.setDecimals(decimals)
+        if singlestep is not None:
+            spinbox.setSingleStep(singlestep)
+
     else:
         spinbox = QtGui.QSpinBox()
-
+        if singlestep is not None:
+            spinbox.setSingleStep(singlestep)
 
     if min:
         spinbox.setMinimum(min)
@@ -36,6 +40,7 @@ def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_s
     if default:
         spinbox.setValue(default)
 
+    
 
     horiz_layout.addWidget(spinbox)
     spinbox.setMinimumWidth(100)
