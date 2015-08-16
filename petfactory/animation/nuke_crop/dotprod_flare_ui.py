@@ -6,61 +6,34 @@ import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
 
 import dotprod_flare
+#import petfactory.animation.nuke_crop.dotprod_flare as dotprod_flare
+reload(dotprod_flare)
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
     
-
-def lerp(x0, y0, x1, y1, x):
-
-    return y0+(y1-y0)*(float(x)-x0)/(x1-x0)
-
-#t: current time, b: begInnIng value, c: change In value, d: duration
-
-def linear(t, b, c, d):
-    return c*t+b
-
-def easeInCubic(t, b, c, d):
-    t /= d
-    return c*t*t*t+b
-
-def easeOutCubic(t, b, c, d):
-    t=t/d-1
-    return c*(t*t*t + 1) + b
-
-def easeInOutCubic(t, b, c, d):
-    t /= d/2
-    if t < 1:
-        return c/2*t*t*t + b
-    t -= 2
-    return c/2*(t*t*t + 2) + b
-
-
 class Widget(QtGui.QWidget):
     
     def __init__(self, parent=None):
-    #def __init__(self):
+
         super(Widget, self).__init__(parent)
-        #super(Widget, self).__init__()
         self.setWindowFlags(QtCore.Qt.Tool)
         
         self.setGeometry(50, 50, 200, 200)
         self.setWindowTitle('Dot Product')
         self.bg_color = QtGui.QColor(68,68,68)
 
-        #self.setAutoFillBackground(True)
         p = self.palette()
         p.setColor(self.backgroundRole(), self.bg_color)
         self.setPalette(p)
 
         
-
         self.equations = {}
-        self.equations['linear'] = linear
-        self.equations['easeInOutCubic'] = easeInOutCubic
-        self.equations['easeOutCubic'] = easeOutCubic
-        self.equations['easeInCubic'] = easeInCubic
+        self.equations['linear'] = dotprod_flare.linear
+        self.equations['easeInOutCubic'] = dotprod_flare.easeInOutCubic
+        self.equations['easeOutCubic'] = dotprod_flare.easeOutCubic
+        self.equations['easeInCubic'] = dotprod_flare.easeInCubic
 
         vbox = QtGui.QVBoxLayout()
         vbox.setContentsMargins(5,5,5,5)
@@ -77,47 +50,25 @@ class Widget(QtGui.QWidget):
         vbox.addWidget(self.combo)
 
         self.min_spinbox = simple_widget.add_spinbox(label='Min', parent_layout=vbox, min=0, max=1, default=0, double_spinbox=True, decimals=3, singlestep=.05, label_width=40)
-        #self.min_spinbox = QtGui.QDoubleSpinBox()
-        #self.min_spinbox.setSingleStep(.05)
-        #self.min_spinbox.setRange(0, 0.95)
-        #vbox.addWidget(self.min_spinbox)
         self.min_spinbox.valueChanged.connect(self.min_spinbox_change)
 
         self.max_spinbox = simple_widget.add_spinbox(label='Max', parent_layout=vbox, min=0, max=1, default=1, double_spinbox=True, decimals=3, singlestep=.05, label_width=40)
-        #self.max_spinbox = QtGui.QDoubleSpinBox()
-        #self.max_spinbox.setSingleStep(.05)
-        #self.max_spinbox.setRange(0.05, 1.0)
-        #self.max_spinbox.setValue(1.0)
-        #vbox.addWidget(self.max_spinbox)
         self.max_spinbox.valueChanged.connect(self.max_spinbox_change)
 
         self.size_mult_spinbox = simple_widget.add_spinbox(label='Multiplier', parent_layout=vbox, min=0, max=10, default=1, double_spinbox=True, decimals=3, singlestep=.1, label_width=40)
 
-
         self.process_data_btn = QtGui.QPushButton('Dot Product')
         vbox.addWidget(self.process_data_btn)
         self.process_data_btn.clicked.connect(self.process_data)
-        
-        
 
-
-        #self.show()
 
     def process_data(self):
 
-        #print(self.combo.currentText())
         equation = self.equations.get(self.combo.currentText())
-        num = 30
-        mult = 100
-        p_list = [i*(1.0/(num-1)) for i in range(num)]
-        #print(p_list)
-
-        for p in p_list:
-            u = min(1.0,max(0, lerp(self.min_spinbox.value(),0,self.max_spinbox.value(),1,p)))
-            y = equation(u, 0, 1.0, 1.0)
-            print(y*mult)
-
-        dotprod_flare.get_dot_prod()
+        old_min = self.min_spinbox.value()
+        old_max = self.max_spinbox.value()
+        multiplier = self.size_mult_spinbox.value()
+        dotprod_flare.get_dot_prod(old_min, old_max, equation, multiplier)
 
 
     def index_changed(self, index):
@@ -175,11 +126,10 @@ class CurveCanvas(QtGui.QWidget):
         
     def drawPoints(self, qp):
       
-        #qp.setPen(QtCore.Qt.red)
         width, height = self.size().toTuple()
         offset = 6
 
-        pen = QtGui.QPen()  # creates a default pen
+        pen = QtGui.QPen()
         pen.setColor(self.grid_color)
         pen.setWidth(1)
         qp.setPen(pen)
@@ -209,8 +159,8 @@ class CurveCanvas(QtGui.QWidget):
             x1 = u1 * (width-offset*2) + offset
             x2 = u2 * (width-offset*2) + offset
 
-            uy1 = min(1.0, max(0, lerp(old_min,0,old_max,1,u1)))
-            uy2 = min(1.0, max(0, lerp(old_min,0,old_max,1,u2)))
+            uy1 = min(1.0, max(0, dotprod_flare.lerp(old_min,0,old_max,1,u1)))
+            uy2 = min(1.0, max(0, dotprod_flare.lerp(old_min,0,old_max,1,u2)))
             y1 = self.equation(uy1, 0, 1.0, 1.0) * (height-offset*2) + offset
             y2 = self.equation(uy2, 0, 1.0, 1.0) * (height-offset*2) + offset
             qp.drawLine(x1, -y1+height, x2, -y2+height)
@@ -222,7 +172,7 @@ class CurveCanvas(QtGui.QWidget):
 
         for i in range(num):
             u = i * inc
-            uy = min(1.0,max(0, lerp(old_min,0,old_max,1,u)))
+            uy = min(1.0,max(0, dotprod_flare.lerp(old_min,0,old_max,1,u)))
             x = u * (width-offset*2) + offset
             y = self.equation(uy, 0, 1.0, 1.0) * (height-offset*2) + offset
             qp.drawPoint(x, -y+height)

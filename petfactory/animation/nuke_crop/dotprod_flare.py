@@ -2,8 +2,30 @@ import pymel.core as pm
 import pprint
 import maya.OpenMaya as OpenMaya
 import petfactory.util.verify as pet_verify
-import math
-    
+import math, os
+
+def lerp(x0, y0, x1, y1, x):
+
+    return y0+(y1-y0)*(float(x)-x0)/(x1-x0)
+
+#t: current time, b: begInnIng value, c: change In value, d: duration
+def linear(t, b, c, d):
+    return c*t+b
+
+def easeInCubic(t, b, c, d):
+    t /= d
+    return c*t*t*t+b
+
+def easeOutCubic(t, b, c, d):
+    t=t/d-1
+    return c*(t*t*t + 1) + b
+
+def easeInOutCubic(t, b, c, d):
+    t /= d/2
+    if t < 1:
+        return c/2*t*t*t + b
+    t -= 2
+    return c/2*(t*t*t + 2) + b
 
 def floatMMatrixToMMatrix_(fm):
     '''thanks to KOICHI TAMURA'''
@@ -33,11 +55,13 @@ def WorldPositionToImageCoordinate(cameraName, imageXRes, imageYRes, worldX, wor
     return imageX, imageY
         
     
-def ws_to_screen(sel_list, frame_start, frame_end):
+def ws_to_screen(sel_list, frame_start, frame_end, old_min, old_max, equation, multiplier):
     
     width = 1920
     height = 1080
     
+    print('ws', old_min, old_max, equation, multiplier)
+
     # first lets see if we can get the current camera
     try:
         camera_unicode = pm.modelPanel(pm.getPanel(wf=True), q=True, cam=True)
@@ -83,8 +107,9 @@ def ws_to_screen(sel_list, frame_start, frame_end):
                                                                     
             loc_z = pm.datatypes.Vector(sel_list[index].getMatrix()[2][:3]).normal()
             
-            #dotprod_list[index].append(math.sin(frame*.1)*2)
-            dotprod_list[index].append(cam_z.dot(loc_z))
+            dotprod = cam_z.dot(loc_z)
+            u = min(1.0,max(0, lerp(old_min,0,old_max,1,dotprod)))
+            dotprod_list[index].append(equation(u, 0, 1.0, 1.0)*multiplier)
 
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
@@ -134,18 +159,18 @@ def build_nuke_pasteboard(x, y, dotprod, name, frame_start, index):
     return s
 
 
-def get_dot_prod():
-    
+def get_dot_prod(old_min, old_max, equation, multiplier):
+
     sel_list = pm.ls(sl=True)
 
-    if len(sel_list < 1):
+    if len(sel_list) < 1:
         pm.warning('Nothing is selected!')
         return
+    #print(min, max, equation)
+    frame_start = 1
+    frame_end = 100
 
-    frame_start = 0
-    frame_end = 0
-
-    node_dict = ws_to_screen(sel_list, frame_start, frame_end)
+    node_dict = ws_to_screen(sel_list, frame_start, frame_end, old_min, old_max, equation, multiplier)
     node_dict_list = node_dict.get('node_list')    
     frame_start = node_dict.get('frame_start')
     
