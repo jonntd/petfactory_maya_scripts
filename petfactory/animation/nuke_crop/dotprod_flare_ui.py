@@ -20,7 +20,8 @@ class Widget(QtGui.QWidget):
         super(Widget, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Tool)
         
-        self.setGeometry(50, 50, 200, 200)
+        #self.setGeometry(50, 50, 200, 200)
+        self.resize(120,280)
         self.setWindowTitle('Dot Product')
         self.bg_color = QtGui.QColor(68,68,68)
 
@@ -40,15 +41,18 @@ class Widget(QtGui.QWidget):
         vbox.addWidget(self.curve_canvas)
         vbox.addWidget(self.combo)
 
-        self.min_spinbox = simple_widget.add_spinbox(label='Min', parent_layout=vbox, min=0, max=1, default=0, double_spinbox=True, decimals=3, singlestep=.05, label_width=40)
+        self.min_spinbox = simple_widget.add_spinbox(label='Min', parent_layout=vbox, min=0, max=1, default=0, double_spinbox=True, decimals=3, singlestep=.05, label_width=70)
         self.min_spinbox.valueChanged.connect(self.min_spinbox_change)
 
-        self.max_spinbox = simple_widget.add_spinbox(label='Max', parent_layout=vbox, min=0, max=1, default=1, double_spinbox=True, decimals=3, singlestep=.05, label_width=40)
+        self.max_spinbox = simple_widget.add_spinbox(label='Max', parent_layout=vbox, min=0, max=1, default=1, double_spinbox=True, decimals=3, singlestep=.05, label_width=70)
         self.max_spinbox.valueChanged.connect(self.max_spinbox_change)
 
-        self.size_mult_spinbox = simple_widget.add_spinbox(label='Multiplier', parent_layout=vbox, min=0, max=10, default=1, double_spinbox=True, decimals=3, singlestep=.1, label_width=40)
+        self.size_mult_spinbox = simple_widget.add_spinbox(label='Multiplier', parent_layout=vbox, min=0, max=10, default=1, double_spinbox=True, decimals=3, singlestep=.1, label_width=70)
+
+        self.use_optical_flare_checkbox = simple_widget.labeled_checkbox(label='Optical Flare', parent_layout=vbox, label_width=70)
 
         self.process_data_btn = QtGui.QPushButton('Dot Product')
+        #self.process_data_btn.setMaximumWidth(100)
         vbox.addWidget(self.process_data_btn)
         self.process_data_btn.clicked.connect(self.process_data)
 
@@ -59,7 +63,9 @@ class Widget(QtGui.QWidget):
         old_min = self.min_spinbox.value()
         old_max = self.max_spinbox.value()
         multiplier = self.size_mult_spinbox.value()
-        dotprod_flare.get_dot_prod(old_min, old_max, equation, multiplier)
+
+        as_optical_flares = self.use_optical_flare_checkbox.isChecked()
+        dotprod_flare.get_dot_prod(old_min, old_max, equation, multiplier, as_optical_flares)
 
 
     def index_changed(self, index):

@@ -11,7 +11,7 @@ import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
 
 '''
-def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_spinbox=False, decimals=2, singlestep=None, label_width=100):
+def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_spinbox=False, decimals=2, singlestep=None, label_width=80):
     
     horiz_layout = QtGui.QHBoxLayout()
     parent_layout.addLayout(horiz_layout)
@@ -19,8 +19,7 @@ def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_s
     label = QtGui.QLabel(label)
     label.setMinimumWidth(label_width)
     horiz_layout.addWidget(label)
-
-    horiz_layout.addStretch()
+    label.setAlignment(QtCore.Qt.AlignRight)
 
     if double_spinbox:
         spinbox = QtGui.QDoubleSpinBox()
@@ -40,10 +39,9 @@ def add_spinbox(label, parent_layout, min=None, max=None, default=None, double_s
     if default:
         spinbox.setValue(default)
 
-    
-
     horiz_layout.addWidget(spinbox)
-    spinbox.setMinimumWidth(100)
+    spinbox.setMinimumWidth(100) 
+    horiz_layout.addStretch()
 
     return spinbox
 
@@ -110,19 +108,20 @@ def labeled_lineedit(label, parent_layout):
 
     return lineedit
 
-def labeled_checkbox(label, parent_layout):
+def labeled_checkbox(label, parent_layout, checked=True, label_width=80):
     
     horiz_layout = QtGui.QHBoxLayout()
     parent_layout.addLayout(horiz_layout)
 
     label = QtGui.QLabel(label)
-    label.setMinimumWidth(80)
+    label.setMinimumWidth(label_width)
     horiz_layout.addWidget(label)
     label.setAlignment(QtCore.Qt.AlignRight)
 
     checkbox = QtGui.QCheckBox()
     horiz_layout.addWidget(checkbox)
     checkbox.setMinimumWidth(100)
+    checkbox.setChecked(checked)
 
     horiz_layout.addStretch()
 

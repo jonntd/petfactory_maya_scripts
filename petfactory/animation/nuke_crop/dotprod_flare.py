@@ -149,7 +149,12 @@ def get_curve_string(an_attr_list, frame_start):
     return s
     
 
-def build_nuke_pasteboard(x, y, dotprod, name, frame_start, index):
+
+def build_nuke_op_flares_string(x, y, dotprod, name, frame_start, index):
+
+    return 'Use Optical flares\n'
+
+def build_nuke_transform_string(x, y, dotprod, name, frame_start, index):
 
     # lerp(.3,0,1,1,curve)
         
@@ -170,7 +175,7 @@ def build_nuke_pasteboard(x, y, dotprod, name, frame_start, index):
     return s
 
 
-def get_dot_prod(old_min, old_max, equation, multiplier):
+def get_dot_prod(old_min, old_max, equation, multiplier, as_optical_flares=False):
 
     sel_list = pm.ls(sl=True)
 
@@ -202,7 +207,11 @@ def get_dot_prod(old_min, old_max, equation, multiplier):
         dotprod = node_dict.get('dotprod')
 
         x, y = zip(*p_list)
-                
-        cmd_string += build_nuke_pasteboard(x, y, dotprod, name, frame_start, index)
+        
+        if as_optical_flares:
+            cmd_string += build_nuke_op_flares_string(x, y, dotprod, name, frame_start, index)
+
+        else:
+            cmd_string += build_nuke_transform_string(x, y, dotprod, name, frame_start, index)
 
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
