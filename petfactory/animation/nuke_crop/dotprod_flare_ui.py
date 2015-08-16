@@ -24,23 +24,14 @@ class Widget(QtGui.QWidget):
         self.setWindowTitle('Dot Product')
         self.bg_color = QtGui.QColor(68,68,68)
 
-        p = self.palette()
-        p.setColor(self.backgroundRole(), self.bg_color)
-        self.setPalette(p)
-
-        
-        self.equations = {}
-        self.equations['linear'] = dotprod_flare.linear
-        self.equations['easeInOutCubic'] = dotprod_flare.easeInOutCubic
-        self.equations['easeOutCubic'] = dotprod_flare.easeOutCubic
-        self.equations['easeInCubic'] = dotprod_flare.easeInCubic
+        self.equations = dotprod_flare.get_equation_dict()
 
         vbox = QtGui.QVBoxLayout()
         vbox.setContentsMargins(5,5,5,5)
         self.setLayout(vbox)
 
         self.combo = QtGui.QComboBox()
-        self.curve_canvas = CurveCanvas(self.equations.get(self.combo.currentText()), self.bg_color)
+        self.curve_canvas = CurveCanvas(self.bg_color)
 
         self.combo.addItems(self.equations.keys())
         self.combo.currentIndexChanged.connect(self.index_changed)
@@ -88,7 +79,6 @@ class Widget(QtGui.QWidget):
         self.curve_canvas.repaint()
 
 
-
     def max_spinbox_change(self, val):
 
         limit = self.min_spinbox.value()+.05
@@ -105,7 +95,7 @@ class Widget(QtGui.QWidget):
 
 class CurveCanvas(QtGui.QWidget):
     
-    def __init__(self, equation, bg_color):
+    def __init__(self, bg_color, equation=None):
         super(CurveCanvas, self).__init__()
         
         self.setMinimumHeight(20)
@@ -126,6 +116,9 @@ class CurveCanvas(QtGui.QWidget):
         
     def drawPoints(self, qp):
       
+        if self.equation is None:
+            return
+
         width, height = self.size().toTuple()
         offset = 6
 
@@ -141,11 +134,7 @@ class CurveCanvas(QtGui.QWidget):
             y = i*inc*(height-offset*2)+offset
             qp.drawLine(x,offset, x, height-offset)
             qp.drawLine(offset, y, width-offset, y)
-        
-        
-        if self.equation is None:
-            return
-
+         
         old_min = self.min
         old_max = self.max
 

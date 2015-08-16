@@ -27,6 +27,16 @@ def easeInOutCubic(t, b, c, d):
     t -= 2
     return c/2*(t*t*t + 2) + b
 
+def get_equation_dict():
+    equations = {}
+    equations['linear'] = linear
+    equations['easeInOutCubic'] = easeInOutCubic
+    equations['easeOutCubic'] = easeOutCubic
+    equations['easeInCubic'] = easeInCubic
+
+    return equations
+
+
 def floatMMatrixToMMatrix_(fm):
     '''thanks to KOICHI TAMURA'''
     mat = OpenMaya.MMatrix()
@@ -57,10 +67,7 @@ def WorldPositionToImageCoordinate(cameraName, imageXRes, imageYRes, worldX, wor
     
 def ws_to_screen(sel_list, frame_start, frame_end, old_min, old_max, equation, multiplier):
     
-    width = 1920
-    height = 1080
-    
-    print('ws', old_min, old_max, equation, multiplier)
+    #print('ws', old_min, old_max, equation, multiplier)
 
     # first lets see if we can get the current camera
     try:
@@ -68,19 +75,23 @@ def ws_to_screen(sel_list, frame_start, frame_end, old_min, old_max, equation, m
         current_cam = pet_verify.to_pynode(camera_unicode)
 
     except RuntimeError as e:
-        print('Could not get the camera', e)
+        pm.warning('Could not get the camera. {0}'.format(e))
         return None
         
-    
+    width = pm.getAttr('defaultResolution.width')
+    height = pm.getAttr('defaultResolution.height')
     curr_time = pm.currentTime(q=True)
-    
+    time_format_dict = {'game':15, 'film':24, 'pal':25, 'ntsc':30, 'show':48, 'palf':50, 'ntscf':60}
+    time_unit = pm.currentUnit(q=True, time=True)
+
     ret_dict = {}
-    info_dict = {}
-    ret_dict['info'] = info_dict
     node_list = []
     ret_dict['node_list'] = node_list
     ret_dict['frame_start'] = frame_start
-    ret_dict['fps'] = 25
+    ret_dict['frame_end'] = frame_end
+    ret_dict['fps'] = time_format_dict.get(time_unit)
+    ret_dict['width'] = width
+    ret_dict['height'] = height
 
 
     # crete a list to store the pos for each object
@@ -167,14 +178,20 @@ def get_dot_prod(old_min, old_max, equation, multiplier):
         pm.warning('Nothing is selected!')
         return
     #print(min, max, equation)
-    frame_start = 1
-    frame_end = 100
+    frame_start = int(pm.playbackOptions(q=True, min=True))
+    frame_end = int(pm.playbackOptions(q=True, max=True))
 
     node_dict = ws_to_screen(sel_list, frame_start, frame_end, old_min, old_max, equation, multiplier)
+
+    if node_dict is None:
+        #pm.warning('')
+        return None
+    pprint.pprint(node_dict)
+
     node_dict_list = node_dict.get('node_list')    
     frame_start = node_dict.get('frame_start')
     
-    pprint.pprint(node_dict_list)
+    #pprint.pprint(node_dict_list)
     
     cmd_string = ''
     
