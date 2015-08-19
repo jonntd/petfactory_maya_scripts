@@ -133,16 +133,16 @@ def get_curve_string(an_attr_list, frame_start):
     return s
     
 
-def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index):
-    
+def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index, x_spacing):
+        
     # hook up to the main dot node, defined outside of this def
     s = 'push $main\n'
         
     s += 'Crop {\n'
     s += '\tinputs 1'
-    s += '\txpos {0}'.format(index * 100)
+    s += '\txpos {0}'.format(index * x_spacing)
     s += '\typos {0}'.format(0)
-    s += '\tname {0}'.format(name)
+    #s += '\tname {0}'.format(name)
     s += '\tbox {\n'
     s += '\t\t{0}\n'.format(get_curve_string(x, frame_start))
     s += '\t\t{0}\n'.format(get_curve_string(y, frame_start))
@@ -150,31 +150,10 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_st
     s += '\t\t{0}\n'.format(get_curve_string(t, frame_start))
     s+= '\t}\n'
     s+= '}\n'
-
-    # test deep
-    ####################################
-    
-    s+= 'set before_deep [stack 0]\n'
-    
-    s += 'DeepFromImage {\n'
-    s += '\tinputs 0'
-    s += '\txpos {0}'.format(index * 100)
-    s += '\typos {0}'.format(25)
-    s += '\tname DeepFromImage_{0}'.format(name)
-    s += '\tset_z true'
-    #s += '\tz 0.314'
-    s += '\tz {\n'
-    s += '\t\t{0}\n'.format(get_curve_string(deep, frame_start))
-    s += '\t}\n'
-    s += '}\n'
-    
-    s += 'push $before_deep\n'
-    # end test deep
-    ####################################
     
     s += 'VolumeRays {\n'
     #s += '\tinputs 0'
-    s += '\txpos {0}'.format(index * 100)
+    s += '\txpos {0}'.format(index * x_spacing)
     s += '\typos {0}'.format(75)
     #s += '\tname {0}'.format(name)
     s += '\tvol_pos {\n'
@@ -183,13 +162,26 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_st
     s += '\t}\n'
     s += '}\n'
     
+    s += 'DeepFromImage {\n'
+    s += '\tinputs 1'
+    s += '\txpos {0}'.format(index * x_spacing)
+    s += '\typos {0}'.format(120)
+    #s += '\tname DeepFromImage_{0}'.format(name)
+    s += '\tset_z true'
+    #s += '\tz 0.314'
+    s += '\tz {\n'
+    s += '\t\t{0}\n'.format(get_curve_string(deep, frame_start))
+    s += '\t}\n'
+    s += '}\n'
+    
+    
     s+= 'set a [stack 0]\n'
     
     if index == 0:
         s += 'Dot {\n'
         #s += '\tinputs 0'
         s += '\txpos {0}'.format(35)
-        s += '\typos {0}'.format(163)
+        s += '\typos {0}'.format(173)
         s += '}\n'
         
         s+= 'set b [stack 0]\n'
@@ -199,11 +191,12 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_st
     s += 'push $a\n'
     s += 'push $b\n'
     
-    s += 'Merge2 {\n'
+    #s += 'Merge2 {\n'
+    s += 'DeepMerge {\n'
     s += '\tinputs 2'
-    s += '\toperation plus'
-    s += '\txpos {0}'.format(index * 100)
-    s += '\typos {0}'.format(160)
+    #s += '\toperation plus'
+    s += '\txpos {0}'.format(index * x_spacing)
+    s += '\typos {0}'.format(170)
     s += '}\n'
     
     s += 'set b [stack 0]\n'
@@ -224,6 +217,11 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
     
     node_dict_list = node_dict.get('node_list')
     frame_start = node_dict.get('frame_start')
+    
+    
+    x_spacing = 130
+    num_nodes = len(node_dict_list)
+    #print(num_nodes)
     
     offset = 0
     crop_list = []
@@ -257,16 +255,22 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
             t.append(max(py)+offset)
 
                 
-        cmd_string += build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index)
+        cmd_string += build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index, x_spacing)
 
-            
+           
+    cmd_string += 'DeepToImage {\n'
+    cmd_string += '\tinputs 1'
+    cmd_string += '\txpos {0}'.format((num_nodes-1) * x_spacing)
+    cmd_string += '\typos {230}'
+    cmd_string+= '}\n'
+    
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
         
         
         
 ##################################
-
 '''
+
 x_pos = 1
 x_neg = -1
 y_pos = 1
@@ -279,7 +283,6 @@ vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
                 pm.datatypes.VectorN(x_pos ,y_neg, 0, 1)]
 
 sel_list = pm.ls(sl=True)
-
 
 build_nuke_voulume_ray(sel_list=sel_list, pos_list=vec_list, z_offset=-3, frame_start=1, frame_end=50)
 '''
