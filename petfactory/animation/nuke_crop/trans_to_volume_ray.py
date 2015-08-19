@@ -70,6 +70,8 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
     vec_list = [[] for x in sel_list]
     center_list = [[] for x in sel_list]
     z_offset_list = [[] for x in sel_list]
+    deep_list = [[] for x in sel_list]
+    cam_wim = current_cam.worldInverseMatrix.get()
     
     # step through the timeline
     for frame in range(frame_start, frame_end+1):
@@ -97,6 +99,9 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
             
             center_list[index].append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=cm[0], worldY=cm[1], worldZ=cm[2]))
             z_offset_list[index].append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=zm[0], worldY=zm[1], worldZ=zm[2]))
+            
+            ws_pos_n = pm.datatypes.VectorN(m[3][0], m[3][1], m[3][2], 1)
+            deep_list[index].append((ws_pos_n * cam_wim)[2])
         
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
@@ -108,6 +113,7 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
         node['verts'] = vec_list[index]
         node['center'] = center_list[index]
         node['z_offset'] = z_offset_list[index]
+        node['deep'] = deep_list[index]
         
         node_list.append(node)
         
@@ -145,6 +151,24 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, i
     s+= '\t}\n'
     s+= '}\n'
 
+    # test deep
+    ####################################
+    
+    s+= 'set before_deep [stack 0]\n'
+    
+    s += 'DeepFromImage {\n'
+    s += '\tinputs 0'
+    s += '\txpos {0}'.format(index * 100)
+    s += '\typos {0}'.format(25)
+    s += '\tname DeepFromImage_{0}'.format(name)
+    s += '\tset_z true'
+    s += '\tz 0.314'
+    s += '}\n'
+    
+    s += 'push $before_deep\n'
+    # end test deep
+    ####################################
+    
     s += 'VolumeRays {\n'
     #s += '\tinputs 0'
     s += '\txpos {0}'.format(index * 100)
@@ -193,11 +217,10 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
     if node_dict is None:
         return
 
+    #pprint.pprint(node_dict)
+    
     node_dict_list = node_dict.get('node_list')
-    
     frame_start = node_dict.get('frame_start')
-    
-    #pprint.pprint(node_dict_list)
     
     offset = 0
     crop_list = []
@@ -236,11 +259,8 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
         
         
-
         
 ##################################
-
-
 
 '''
 x_pos = 1
@@ -257,5 +277,5 @@ vec_list = [    pm.datatypes.VectorN(x_pos, y_pos, 0, 1),
 sel_list = pm.ls(sl=True)
 
 
-build_nuke_voulume_ray(sel_list=sel_list, pos_list=vec_list, frame_start=1, frame_end=100)
+build_nuke_voulume_ray(sel_list=sel_list, pos_list=vec_list, z_offset=-3, frame_start=1, frame_end=50)
 '''
