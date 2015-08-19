@@ -133,7 +133,7 @@ def get_curve_string(an_attr_list, frame_start):
     return s
     
 
-def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, index):
+def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index):
     
     # hook up to the main dot node, defined outside of this def
     s = 'push $main\n'
@@ -162,7 +162,10 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, i
     s += '\typos {0}'.format(25)
     s += '\tname DeepFromImage_{0}'.format(name)
     s += '\tset_z true'
-    s += '\tz 0.314'
+    #s += '\tz 0.314'
+    s += '\tz {\n'
+    s += '\t\t{0}\n'.format(get_curve_string(deep, frame_start))
+    s += '\t}\n'
     s += '}\n'
     
     s += 'push $before_deep\n'
@@ -177,8 +180,8 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, i
     s += '\tvol_pos {\n'
     s += '\t\t{0}\n'.format(get_curve_string(vol_pos_x, frame_start))
     s += '\t\t{0}\n'.format(get_curve_string(vol_pos_y, frame_start))
-    s+= '\t}\n'
-    s+= '}\n'
+    s += '\t}\n'
+    s += '}\n'
     
     s+= 'set a [stack 0]\n'
     
@@ -187,7 +190,7 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, i
         #s += '\tinputs 0'
         s += '\txpos {0}'.format(35)
         s += '\typos {0}'.format(163)
-        s+= '}\n'
+        s += '}\n'
         
         s+= 'set b [stack 0]\n'
         
@@ -201,9 +204,9 @@ def build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, i
     s += '\toperation plus'
     s += '\txpos {0}'.format(index * 100)
     s += '\typos {0}'.format(160)
-    s+= '}\n'
+    s += '}\n'
     
-    s+= 'set b [stack 0]\n'
+    s += 'set b [stack 0]\n'
     
     
     return s
@@ -236,6 +239,7 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
         vert_list = node_dict.get('verts')
         z_offset_list = node_dict.get('z_offset')
         name = node_dict.get('name')
+        deep = node_dict.get('deep')
         
         
         x = []
@@ -253,7 +257,7 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
             t.append(max(py)+offset)
 
                 
-        cmd_string += build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, frame_start, index)
+        cmd_string += build_nuke_pasteboard(x, y, r, t, name, vol_pos_x, vol_pos_y, deep, frame_start, index)
 
             
     os.system("echo {0} | pbcopy".format('\'' + cmd_string + '\''))
