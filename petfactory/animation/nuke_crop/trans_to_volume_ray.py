@@ -101,7 +101,7 @@ def ws_to_screen(sel_list, pos_list, z_offset, frame_start, frame_end):
             z_offset_list[index].append(WorldPositionToImageCoordinate(cameraName=current_cam, imageXRes=width, imageYRes=height, worldX=zm[0], worldY=zm[1], worldZ=zm[2]))
             
             ws_pos_n = pm.datatypes.VectorN(m[3][0], m[3][1], m[3][2], 1)
-            deep_list[index].append((ws_pos_n * cam_wim)[2])
+            deep_list[index].append((ws_pos_n * cam_wim)[2] *-1)
         
     # reset the time indicator
     pm.currentTime(curr_time, update=True, edit=True)
@@ -269,8 +269,8 @@ def build_nuke_voulume_ray(sel_list, pos_list, z_offset, frame_start, frame_end)
         
         
 ##################################
-'''
 
+'''
 x_pos = 1
 x_neg = -1
 y_pos = 1
