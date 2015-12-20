@@ -139,7 +139,22 @@ def get_nodetype(node):
         return(type(node))
 
 def to_transform(node):
-    if not isinstance(node, pm.nodetypes.Transform):
+
+    try:
         return node.getParent()
+
+    except AttributeError as e:
+        return node
+
+    '''
+    if not isinstance(node, pm.nodetypes.Transform):
+
+        try:
+            return node.getParent()
+
+        except AttributeError as e:
+            return node
+
     else:
         return node
+    '''
