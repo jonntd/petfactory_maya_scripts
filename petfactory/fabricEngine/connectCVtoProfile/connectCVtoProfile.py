@@ -100,6 +100,9 @@ class Panel(QtGui.QWidget):
         path = '/Users/johan/Dev/fabricEngine/canvas/polygon/twoCircleTangent/twoCircleTangentXfoFlip.canvas'
         pm.dfgImportJSON(m=canvasNode, f=path)
         self.canvas_lineedit.setText(canvasNode.name())
+
+        loc = pm.createNode('locator')
+        canvasNode.dummy >> loc.v
         
     def break_con_btn_clicked(self):
         
