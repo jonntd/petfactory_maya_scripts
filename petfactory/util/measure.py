@@ -161,4 +161,4 @@ def show():
     win = MeasureWidget(parent=maya_main_window())
     win.show()
 
-show()
+#show()
