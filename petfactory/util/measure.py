@@ -6,10 +6,13 @@ import maya.OpenMayaUI as omui
 from functools import partial
 
 
-def createMeasureGrp(startPos, endPos):
-
+def createMeasureGrp(startPos, endPos, loc_size=1.0):
+    
     locOrigo = pm.createNode('locator')
     locEnd = pm.createNode('locator')
+    
+    locOrigo.localScale.set(loc_size,loc_size,loc_size)
+    locEnd.localScale.set(loc_size,loc_size,loc_size)
     
     locOrigoTrans = locOrigo.getParent()
     locEndTrans = locEnd.getParent()
@@ -27,14 +30,21 @@ def createMeasureGrp(startPos, endPos):
     pm.parent(locOrigoTrans, distDim.getParent(), grp)
     
 
-def createMeasureGrpFromSel(lockAxis, freeAxis=0):
+def createMeasureGrpFromSel(lockAxis, loc_size=1.0, freeAxis=0, useComponents=False):
     
-    sel = pm.ls(sl=True)
+    if useComponents:
+        
+        sel = pm.ls(orderedSelection=True)
+        
+    else:
+        sel = pm.ls(sl=True)
+
+    print(sel)
     
     if len(sel) < 2:
-        pm.warning('Select atleast 2 nodes!')
-        return
-    
+        pm.warning('Select atl east 2 nodes!')
+        return            
+            
     startPos = pm.xform(sel[0], query=True, translation=True, worldSpace=True)
     endPos = pm.xform(sel[1], query=True, translation=True, worldSpace=True)
         
@@ -49,10 +59,10 @@ def createMeasureGrpFromSel(lockAxis, freeAxis=0):
         else:
             endPos = pm.datatypes.Vector(startPos[0], startPos[1], endPos[2])
             
-        createMeasureGrp(startPos, endPos)
+        createMeasureGrp(startPos, endPos, loc_size=loc_size)
         
     else:        
-        createMeasureGrp(startPos, endPos)
+        createMeasureGrp(startPos, endPos, loc_size=loc_size)
 
 
 def maya_main_window():
@@ -108,20 +118,47 @@ class MeasureWidget(QtGui.QWidget):
         vbox.addWidget(measure_all_axis_btn)
         measure_all_axis_btn.clicked.connect(self.measure_free_axis)
         
+        # use vertices
         
+        use_verts_hbox = QtGui.QHBoxLayout()
+        vbox.addLayout(use_verts_hbox)
+        
+        self.use_verts_checkbox = QtGui.QCheckBox('Use Vertices')
+        use_verts_hbox.addWidget(self.use_verts_checkbox)
+        self.use_verts_checkbox.clicked.connect(self.use_verts_cb_clicked)
+        
+        # locator size
+        
+        loc_size_hbox = QtGui.QHBoxLayout()
+        vbox.addLayout(loc_size_hbox)
+        
+        self.loc_size_spinbox = QtGui.QDoubleSpinBox()
+        loc_size_hbox.addWidget(self.loc_size_spinbox)
+
+        
+        
+
         vbox.addStretch()
         
     def measure_locked_axis(self, axis):
-        createMeasureGrpFromSel(lockAxis=True, freeAxis=axis)
+        createMeasureGrpFromSel(lockAxis=True, loc_size=self.loc_size_spinbox.value(), freeAxis=axis, useComponents=self.use_verts_checkbox.isChecked())
         
     def measure_free_axis(self):
-        createMeasureGrpFromSel(lockAxis=False)
+        createMeasureGrpFromSel(lockAxis=False, loc_size=self.loc_size_spinbox.value(), useComponents=self.use_verts_checkbox.isChecked())
         
+    def use_verts_cb_clicked(self):
         
+        #pm.selectPref(trackSelectionOrder=True, q=True)
         
-        
+        # we need to tell maya that we are intersested in theselection order of components
+        if self.sender().isChecked():
+            pm.selectPref(trackSelectionOrder=True)
+        else:
+            pm.selectPref(trackSelectionOrder=False)
+            
+             
 def show():
     win = MeasureWidget(parent=maya_main_window())
     win.show()
 
-#show()
+show()
