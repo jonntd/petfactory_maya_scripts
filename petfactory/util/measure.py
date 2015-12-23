@@ -8,6 +8,10 @@ from functools import partial
 
 def createMeasureGrp(startPos, endPos, loc_size=1.0, color_index=12):
     
+    grp = pm.group(em=True)
+    grp.rename('measureGrp')
+    grp.translate.set(startPos)
+    
     locOrigo = pm.createNode('locator')
     locEnd = pm.createNode('locator')
     
@@ -19,15 +23,11 @@ def createMeasureGrp(startPos, endPos, loc_size=1.0, color_index=12):
     
     locOrigoTrans.translate.set(startPos)
     locEndTrans.translate.set(endPos)
-    
-    pm.parent(locEndTrans, locOrigoTrans)
             
     pm.select([locOrigo, locEnd])
     distDim = pm.distanceDimension()
     
-    grp = pm.group(em=True)
-    grp.rename('measureGrp')
-    pm.parent(locOrigoTrans, distDim.getParent(), grp)
+    pm.parent(locEndTrans, locOrigoTrans, distDim.getParent(), grp)
     
     locOrigo.overrideEnabled.set(True)
     locEnd.overrideEnabled.set(True)
@@ -88,7 +88,7 @@ class PopupDialog(QtGui.QDialog):
         self.setWindowFlags(QtCore.Qt.Tool)
         self.resize(150, 150)
         self.setWindowTitle("Set Drawing Overide")
-        self.color_index = None
+        self.color_index = 0
         
         # layout
         vertical_layout = QtGui.QVBoxLayout()
@@ -228,25 +228,48 @@ class MeasureWidget(QtGui.QWidget):
         
         self.loc_size_spinbox = QtGui.QDoubleSpinBox()
         self.loc_size_spinbox.setValue(1.0)
+        self.loc_size_spinbox.setSingleStep(0.1)
         loc_size_hbox.addWidget(self.loc_size_spinbox)
         
         
         # select color
         
-        select_color_button = QtGui.QPushButton('Color')
-        loc_size_hbox.addWidget(select_color_button)
-        select_color_button.clicked.connect(self.select_color_clicked)
-
-        vbox.addStretch()
+        self.select_color_button = QtGui.QPushButton('Color')
+        loc_size_hbox.addWidget(self.select_color_button)
+        self.select_color_button.clicked.connect(self.select_color_clicked)
+        self.update_current_color()
         
+        vbox.addStretch()
+    
+    def update_current_color(self):
+        
+        if self.color_index is 0:
+            color_float = (.471, .471, .471)
+                
+        else:
+            color_float = pm.colorIndex(self.color_index, q=True)
+                
+        color = QtGui.QColor()
+
+        color.setRgbF(color_float[0], color_float[1], color_float[2])
+        pixmap = QtGui.QPixmap(50, 50)
+        pixmap.fill(QtGui.QColor(color))
+        icon = QtGui.QIcon(pixmap)
+        
+        self.select_color_button.setIcon(icon)
+        print(icon)
+            
     def select_color_clicked(self):
         
         (self.color_index, result) = PopupDialog.getPopupInfo(self)
         
         if result:
             print(self.color_index)
+            self.update_current_color()
+            
         else:
-            print('canceled!')
+            #print('canceled!')
+            pass
         
     def measure_locked_axis(self, axis):
         createMeasureGrpFromSel(lockAxis=True, loc_size=self.loc_size_spinbox.value(), freeAxis=axis, useComponents=self.use_verts_checkbox.isChecked(), color_index=self.color_index)
