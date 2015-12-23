@@ -166,7 +166,7 @@ class MeasureWidget(QtGui.QWidget):
         super(MeasureWidget, self).__init__(parent)
         
         self.setWindowFlags(QtCore.Qt.Tool)
-        self.setGeometry(200, 200, 250, 100)
+        self.setGeometry(200, 200, 180, 100)
         self.setWindowTitle('Measure')
         self.color_index = 0
         
@@ -256,8 +256,9 @@ class MeasureWidget(QtGui.QWidget):
         color.setRgbF(color_float[0], color_float[1], color_float[2])
         pixmap = QtGui.QPixmap(50, 50)
         pixmap.fill(QtGui.QColor(color))
-        icon = QtGui.QIcon(pixmap)        
+        icon = QtGui.QIcon(pixmap)
         self.select_color_button.setIcon(icon)
+        self.select_color_button.setIconSize(QtCore.QSize(8, 8))
 
             
     def select_color_clicked(self):
