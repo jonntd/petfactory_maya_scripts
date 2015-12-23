@@ -6,7 +6,7 @@ import maya.OpenMayaUI as omui
 from functools import partial
 
 
-def createMeasureGrp(startPos, endPos, loc_size=1.0):
+def createMeasureGrp(startPos, endPos, loc_size=1.0, color_index=12):
     
     locOrigo = pm.createNode('locator')
     locEnd = pm.createNode('locator')
@@ -29,8 +29,16 @@ def createMeasureGrp(startPos, endPos, loc_size=1.0):
     grp.rename('measureGrp')
     pm.parent(locOrigoTrans, distDim.getParent(), grp)
     
+    locOrigo.overrideEnabled.set(True)
+    locEnd.overrideEnabled.set(True)
+    distDim.overrideEnabled.set(True)
+    
+    locOrigo.overrideColor.set(color_index)
+    locEnd.overrideColor.set(color_index)
+    distDim.overrideColor.set(color_index)
+    
 
-def createMeasureGrpFromSel(lockAxis, loc_size=1.0, freeAxis=0, useComponents=False):
+def createMeasureGrpFromSel(lockAxis, loc_size=1.0, freeAxis=0, useComponents=False, color_index=None):
     
     if useComponents:
         
@@ -59,17 +67,98 @@ def createMeasureGrpFromSel(lockAxis, loc_size=1.0, freeAxis=0, useComponents=Fa
         else:
             endPos = pm.datatypes.Vector(startPos[0], startPos[1], endPos[2])
             
-        createMeasureGrp(startPos, endPos, loc_size=loc_size)
+        createMeasureGrp(startPos, endPos, loc_size=loc_size, color_index=color_index)
         
     else:        
-        createMeasureGrp(startPos, endPos, loc_size=loc_size)
+        createMeasureGrp(startPos, endPos, loc_size=loc_size, color_index=color_index)
 
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
     
-       
+# popup win
+
+class PopupDialog(QtGui.QDialog):
+    
+    def __init__(self, parent=None):
+        
+        super(PopupDialog, self).__init__(parent)
+
+        self.setWindowFlags(QtCore.Qt.Tool)
+        self.resize(150, 150)
+        self.setWindowTitle("Set Drawing Overide")
+        self.color_index = None
+        
+        # layout
+        vertical_layout = QtGui.QVBoxLayout()
+        self.setLayout(vertical_layout)
+        vertical_layout.setContentsMargins(2,2,2,2)
+        
+        # use shape
+        grid_horiz_layout = QtGui.QHBoxLayout()
+        vertical_layout.addLayout(grid_horiz_layout)
+        
+        grid = QtGui.QGridLayout()
+        grid.setSpacing(1)
+        grid.setContentsMargins(0,0,0,0)
+
+
+        num_buttons = 32
+        btn_per_row = 8
+
+        for n in range(0, num_buttons):
+            
+            if n is 0:
+                color_float = (.471, .471, .471)
+                
+            else:
+                color_float = pm.colorIndex(n, q=True)
+
+            color = QtGui.QColor()
+
+            color.setRgbF(color_float[0], color_float[1], color_float[2])
+            pixmap = QtGui.QPixmap(50, 50)
+            pixmap.fill(QtGui.QColor(color))
+            icon = QtGui.QIcon(pixmap)
+            
+            button = QtGui.QPushButton(icon, "")
+            
+            button.setMinimumSize(50,50)
+            button.setMaximumSize(50,50)
+            button.setIconSize(QtCore.QSize(50,50))
+            button.color_index = n
+            button.clicked.connect(self.selectColor)
+            grid.addWidget(button, (n)/btn_per_row, (n)%btn_per_row)
+            
+
+        grid_horiz_layout.addLayout(grid)
+        grid_horiz_layout.addStretch()
+        
+        # OK and Cancel buttons
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        vertical_layout.addWidget(buttons)
+        
+        vertical_layout.addStretch()
+
+        self.show()
+        
+    def selectColor(self):
+        self.color_index = self.sender().color_index
+        
+    def dialogButtonClicked(self, btn):
+        print(btn)
+        
+    @staticmethod
+    def getPopupInfo(parent = None):
+        
+        dialog = PopupDialog(parent)
+        result = dialog.exec_()     
+        return (dialog.color_index, result == QtGui.QDialog.Accepted)
+        
+          
 class MeasureWidget(QtGui.QWidget):
     
     def __init__(self, parent=None):
@@ -79,6 +168,7 @@ class MeasureWidget(QtGui.QWidget):
         self.setWindowFlags(QtCore.Qt.Tool)
         self.setGeometry(200, 200, 250, 100)
         self.setWindowTitle('Measure')
+        self.color_index = 0
         
         vbox = QtGui.QVBoxLayout()
         self.setLayout(vbox)
@@ -132,19 +222,37 @@ class MeasureWidget(QtGui.QWidget):
         loc_size_hbox = QtGui.QHBoxLayout()
         vbox.addLayout(loc_size_hbox)
         
+        loc_size_label = QtGui.QLabel('Loc size')
+        loc_size_label.setMaximumWidth(50)
+        loc_size_hbox.addWidget(loc_size_label)        
+        
         self.loc_size_spinbox = QtGui.QDoubleSpinBox()
+        self.loc_size_spinbox.setValue(1.0)
         loc_size_hbox.addWidget(self.loc_size_spinbox)
-
         
         
+        # select color
+        
+        select_color_button = QtGui.QPushButton('Color')
+        loc_size_hbox.addWidget(select_color_button)
+        select_color_button.clicked.connect(self.select_color_clicked)
 
         vbox.addStretch()
         
+    def select_color_clicked(self):
+        
+        (self.color_index, result) = PopupDialog.getPopupInfo(self)
+        
+        if result:
+            print(self.color_index)
+        else:
+            print('canceled!')
+        
     def measure_locked_axis(self, axis):
-        createMeasureGrpFromSel(lockAxis=True, loc_size=self.loc_size_spinbox.value(), freeAxis=axis, useComponents=self.use_verts_checkbox.isChecked())
+        createMeasureGrpFromSel(lockAxis=True, loc_size=self.loc_size_spinbox.value(), freeAxis=axis, useComponents=self.use_verts_checkbox.isChecked(), color_index=self.color_index)
         
     def measure_free_axis(self):
-        createMeasureGrpFromSel(lockAxis=False, loc_size=self.loc_size_spinbox.value(), useComponents=self.use_verts_checkbox.isChecked())
+        createMeasureGrpFromSel(lockAxis=False, loc_size=self.loc_size_spinbox.value(), useComponents=self.use_verts_checkbox.isChecked(), color_index=self.color_index)
         
     def use_verts_cb_clicked(self):
         
