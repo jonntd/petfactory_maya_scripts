@@ -180,9 +180,10 @@ class MeasureWidget(QtGui.QWidget):
         measure_axis_x_btn = QtGui.QPushButton('X')
         locked_axis_hbox.addWidget(measure_axis_x_btn)
         measure_axis_x_btn.clicked.connect(partial(self.measure_locked_axis, 0))
-        p = measure_axis_x_btn.palette()
-        p.setColor(measure_axis_x_btn.backgroundRole(), QtGui.QColor(100, 0,0))
-        measure_axis_x_btn.setPalette(p)
+        measure_axis_x_btn.setStyleSheet('QPushButton { color: #dd0000; font-style: bold  }')
+        #p = measure_axis_x_btn.palette()
+        #p.setColor(measure_axis_x_btn.backgroundRole(), QtGui.QColor(100, 0,0))
+        #measure_axis_x_btn.setPalette(p)
         
         
         
@@ -190,18 +191,20 @@ class MeasureWidget(QtGui.QWidget):
         measure_axis_y_btn = QtGui.QPushButton('Y')
         locked_axis_hbox.addWidget(measure_axis_y_btn)
         measure_axis_y_btn.clicked.connect(partial(self.measure_locked_axis, 1))
-        p = measure_axis_y_btn.palette()
-        p.setColor(measure_axis_y_btn.backgroundRole(), QtGui.QColor(0,100,0))
-        measure_axis_y_btn.setPalette(p)
+        measure_axis_y_btn.setStyleSheet('QPushButton { color: #00aa00; font-style: bold  }')
+        #p = measure_axis_y_btn.palette()
+        #p.setColor(measure_axis_y_btn.backgroundRole(), QtGui.QColor(0,100,0))
+        #measure_axis_y_btn.setPalette(p)
         
         
         # z
         measure_axis_z_btn = QtGui.QPushButton('Z')
         locked_axis_hbox.addWidget(measure_axis_z_btn)
         measure_axis_z_btn.clicked.connect(partial(self.measure_locked_axis, 2))
-        p = measure_axis_z_btn.palette()
-        p.setColor(measure_axis_z_btn.backgroundRole(), QtGui.QColor(0,0,100))
-        measure_axis_z_btn.setPalette(p)
+        measure_axis_z_btn.setStyleSheet('QPushButton { color: #0000dd; font-style: bold  }')
+        #p = measure_axis_z_btn.palette()
+        #p.setColor(measure_axis_z_btn.backgroundRole(), QtGui.QColor(0,0,100))
+        #measure_axis_z_btn.setPalette(p)
         
         # all axis
         measure_all_axis_btn = QtGui.QPushButton('All axis')
@@ -250,14 +253,12 @@ class MeasureWidget(QtGui.QWidget):
             color_float = pm.colorIndex(self.color_index, q=True)
                 
         color = QtGui.QColor()
-
         color.setRgbF(color_float[0], color_float[1], color_float[2])
         pixmap = QtGui.QPixmap(50, 50)
         pixmap.fill(QtGui.QColor(color))
-        icon = QtGui.QIcon(pixmap)
-        
+        icon = QtGui.QIcon(pixmap)        
         self.select_color_button.setIcon(icon)
-        print(icon)
+
             
     def select_color_clicked(self):
         
