@@ -66,10 +66,9 @@ def export_mesh_with_attr(path):
             mesh_attr_dict[attr] = []
             
         mesh_attr_dict[attr].append(mesh)
-        
-    #return mesh_attr_dict
-    
-    
+
+    #grp = pm.group(em=True, n='export_obj_grp')
+
     for attr, mesh_list in mesh_attr_dict.iteritems():
         
         dup_list = []
@@ -79,16 +78,19 @@ def export_mesh_with_attr(path):
             dup_list.append(dup)
         
         if len(dup_list) > 1:
-            combined_mesh = pm.polyUnite(dup_list, n=attr, ch=False )[0]
+            #combined_mesh = pm.polyUnite(dup_list, n=attr, ch=False )[0]
+            combined_mesh = pm.polyUnite(dup_list, ch=False)[0]
         else:
-            combined_mesh = dup_list[0]
-            
+            combined_mesh = dup[0]
+
+        #pm.parent(combined_mesh, grp)
+        combined_mesh.rename(attr)
+
         pm.polyTriangulate(combined_mesh, ch=False)
         export_mesh_list.append(combined_mesh)
-        
-        
+
     pm.select(export_mesh_list)
-    pm.exportSelected(path, force=True, typ='OBJexport', preserveReferences=True, op="groups=1;ptgroups=1;materials=1;smoothing=1;normals=1")
+    pm.exportSelected(path, force=True, typ='OBJexport', preserveReferences=True, op="groups=1;ptgroups=1;materials=0;smoothing=1;normals=1")
     
     #pm.delete()
 
