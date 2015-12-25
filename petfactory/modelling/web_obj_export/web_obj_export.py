@@ -88,7 +88,7 @@ def export_mesh_with_attr(path):
         
         
     pm.select(export_mesh_list)
-    pm.exportSelected(path, force=True, typ='OBJexport', op="groups=1;ptgroups=1;materials=1;smoothing=1;normals=1")
+    pm.exportSelected(path, force=True, typ='OBJexport', preserveReferences=True, op="groups=1;ptgroups=1;materials=1;smoothing=1;normals=1")
     
     #pm.delete()
 
