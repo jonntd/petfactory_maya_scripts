@@ -12,7 +12,24 @@ attrKey = 'objExportName'
  
 def gather_meshes():
     
-    mesh_list = pm.ls(type='mesh')
+
+    sel_list = pm.ls(sl=True)
+
+    if len(sel_list) < 1:
+        mesh_list = pm.ls(type='mesh')
+
+    else:
+        mesh_list = []
+
+        for sel in sel_list:
+
+            try:
+                shape = sel.getShape()
+                if isinstance(shape, pm.nodetypes.Mesh):
+                    mesh_list.append(shape)
+            except AttributeError as e:
+                print(e)
+
     match_list = []
     
     for mesh in mesh_list:
@@ -117,6 +134,7 @@ class WebObjExportWidget(QtGui.QDialog):
         vbox.addLayout(path_hbox)
 
         self.path_lineedit = QtGui.QLineEdit()
+        #self.path_lineedit.setText('/Users/johan/Desktop')
         path_hbox.addWidget(self.path_lineedit)
         
         set_path_btn = QtGui.QPushButton('Set path')
