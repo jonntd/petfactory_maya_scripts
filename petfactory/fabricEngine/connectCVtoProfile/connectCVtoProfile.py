@@ -7,7 +7,7 @@ import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
 
 
-def connect_selected_crv(crv_xfo, canvas_node):
+def connect_selected_crv(crv_xfo, canvas_node, profile, profile_count):
     
     try:
         crv_shape = crv_xfo.getShape()
@@ -19,26 +19,37 @@ def connect_selected_crv(crv_xfo, canvas_node):
         
     
     try:
-        canvas_node.sideProfileCount.set(len(crv_cvs))
+        pm.setAttr('{}.{}'.format(canvas_node, profile_count), len(crv_cvs))
         
+        profile_attr = pm.general.Attribute('{}.{}'.format(canvas_node, profile))
         for index, cv in enumerate(crv_cvs):
-            crv_shape.controlPoints[index] >> canvas_node.sideProfile[index]
+
+            #crv_shape.controlPoints[index] >> canvas_node.sideProfile[index]
+            crv_shape.controlPoints[index] >> profile_attr[index]
             
     except AttributeError as e:
         pm.warning('{}'.format(e))
         
         
 
-def remove_input_crv(canvas_node):
+def remove_input_crv(canvas_node, profile, profile_count):
     
-    try: 
-        num = canvas_node.sideProfile.numElements()
+    try:
+        #num = canvas_node.sideProfile.numElements()
+        profile_attr = pm.general.Attribute('{}.{}'.format(canvas_node, profile))
+        num = profile_attr.numElements()
     
+        profile_attr = pm.general.Attribute('{}.{}'.format(canvas_node, profile))
         for i in range(num):
-            if canvas_node.sideProfile[i].isConnected():
-               canvas_node.sideProfile[i].disconnect()
+
+            if profile_attr[i].isConnected():
+               profile_attr[i].disconnect()
+
+            #if canvas_node.sideProfile[i].isConnected():
+               #canvas_node.sideProfile[i].disconnect()
                
-        canvas_node.sideProfileCount.set(0)
+        #canvas_node.sideProfileCount.set(0)
+        pm.setAttr('{}.{}'.format(canvas_node, profile_count), 0)
         
     except AttributeError as e:
         pm.warning('{}'.format(e))
@@ -62,6 +73,10 @@ class Panel(QtGui.QWidget):
         
         vbox = QtGui.QVBoxLayout()
         self.setLayout(vbox)
+
+        self.profileAttrList = [['sideProfile', 'sideProfileCount'],
+                                ['cap1Profile', 'cap1ProfileCount'],
+                                ['cap2Profile', 'cap2ProfileCount']]
         
         # create canvas node
         create_canvas_node_btn = QtGui.QPushButton('Create canvas node')
@@ -70,9 +85,13 @@ class Panel(QtGui.QWidget):
         
         
         # canvas node lineedit
-        self.canvas_lineedit = simple_widget.add_filtered_populate_lineedit(label='  canvasNode >>  ', parent_layout=vbox, nodetype=pm.nodetypes.CanvasNode)
-           
-                
+        self.canvas_lineedit = simple_widget.add_filtered_populate_lineedit(label='  canvasNode >> ', parent_layout=vbox, nodetype=pm.nodetypes.CanvasNode)
+
+        self.profile_combobox = QtGui.QComboBox()
+        vbox.addWidget(self.profile_combobox)
+        self.profile_combobox.addItems(['Side', 'Cap 1', 'Cap 2'])
+
+
         # connect        
         connect_cvs_btn = QtGui.QPushButton('Connect CVs to profile')
         vbox.addWidget(connect_cvs_btn)
@@ -106,20 +125,31 @@ class Panel(QtGui.QWidget):
         
     def break_con_btn_clicked(self):
         
+        index = self.profile_combobox.currentIndex()
+        profile = self.profileAttrList[index][0]
+        profileCount = self.profileAttrList[index][1]
+
+        print(profile, profileCount)
+
         canvas_node = pm.PyNode(self.canvas_lineedit.text())
-        remove_input_crv(canvas_node)
+        remove_input_crv(canvas_node, profile, profileCount)
 
         
     def connect_cvs_btn_clicked(self):
         
+        index = self.profile_combobox.currentIndex()
+        profile = self.profileAttrList[index][0]
+        profileCount = self.profileAttrList[index][1]
+
+        print(profile, profileCount)
+
         canvas_node = pm.PyNode(self.canvas_lineedit.text())
         crv_xfo = pm.ls(sl=True)[0]
-        connect_selected_crv(crv_xfo, canvas_node)
-        
-        
+        connect_selected_crv(crv_xfo, canvas_node, profile, profileCount)
 
 def show():
     win = Panel(parent=maya_main_window())
     win.show()
+    return win
 
 #show()
