@@ -6,6 +6,77 @@ import maya.OpenMayaUI as omui
 import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
 
+def get_attr_dict(canvas_node, allowed_attr):
+    
+    user_defined_attr = canvas_node.listAttr(userDefined=True, settable=True)               
+    attr_dict = {}
+    
+    for attr in user_defined_attr:
+                
+        try:
+            index = allowed_attr.index(attr.type())
+            
+            # Check if the plug is a child plug.
+            # A child plugs parent is always a compound plug.
+            if attr.isChild():
+                continue
+           
+            attr_dict[attr.name(includeNode=False)] = attr.get()
+            
+        except ValueError:
+            pass
+            
+    return attr_dict
+
+
+def set_attr_dict(canvas_node_list, attr_dict):
+    
+    for canvas_node in canvas_node_list:
+        
+        for attr, value in attr_dict.iteritems():
+            
+            try:
+                pm.setAttr('{}.{}'.format(canvas_node, attr), value)
+                
+            except pm.MayaAttributeError as e:
+                print('could not set attr. {}'.format(e))
+ 
+    
+def copy_canvas_attr(canvas_source, canvas_targets):
+    
+    valid_attr_type = ['bool', 'double', 'long']
+    attr_dict = get_attr_dict(canvas_source, valid_attr_type)
+    set_attr_dict(canvas_targets, attr_dict)
+
+
+def copy_from_sel():
+
+    sel_list = pm.ls(sl=True)
+
+    if len(sel_list) < 2:
+        pm.warning('Please select 2 canvas nodes!')
+        return
+    
+    if isinstance(sel_list[0], pm.nodetypes.CanvasNode):
+        source = sel_list[0]
+    else:
+        pm.warning('Make sure that selected nodes are canvasNodes!')
+        return
+
+    targets = []
+
+    for sel in sel_list[1:]:
+        if isinstance(sel_list[0], pm.nodetypes.CanvasNode):
+            targets.append(sel)
+
+    if len(targets) > 0:
+        copy_canvas_attr(source, targets)
+        #print(source)
+        #print(targets)
+
+    else:
+        pm.warning('Make sure that selected nodes are canvasNodes!')
+
 
 def connect_selected_crv(crv_xfo, canvas_node, profile, profile_count):
     
@@ -109,10 +180,17 @@ class Panel(QtGui.QWidget):
         p = break_con_btn.palette()
         p.setColor(break_con_btn.backgroundRole(), QtGui.QColor(100,0,0))
         break_con_btn.setPalette(p)
-           
+
+        # copy attr        
+        copy_attr_btn = QtGui.QPushButton('Copy attr')
+        vbox.addWidget(copy_attr_btn)
+        copy_attr_btn.clicked.connect(self.copy_attr_btn_clicked)
         
         vbox.addStretch()
         
+    def copy_attr_btn_clicked(self):
+        copy_from_sel()
+
     def create_canvas_node_btn_clicked(self):
         
         canvasNode = pm.createNode('canvasNode')
