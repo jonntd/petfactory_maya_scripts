@@ -14,13 +14,14 @@ def get_attr_dict(canvas_node, allowed_attr):
     for attr in user_defined_attr:
                 
         try:
-            index = allowed_attr.index(attr.type())
-            
+
             # Check if the plug is a child plug.
             # A child plugs parent is always a compound plug.
             if attr.isChild():
                 continue
-           
+
+            index = allowed_attr.index(attr.type())
+
             attr_dict[attr.name(includeNode=False)] = attr.get()
             
         except ValueError:
