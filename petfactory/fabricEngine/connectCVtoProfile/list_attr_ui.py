@@ -17,7 +17,7 @@ class MeasureWidget(QtGui.QWidget):
         super(MeasureWidget, self).__init__(parent)
         
         self.setWindowFlags(QtCore.Qt.Tool)
-        self.setGeometry(200, 200, 180, 100)
+        self.setGeometry(200, 200, 200, 400)
         self.setWindowTitle('Measure')
         
         vbox = QtGui.QVBoxLayout()
@@ -28,11 +28,23 @@ class MeasureWidget(QtGui.QWidget):
         
         self.model = QtGui.QStandardItemModel()
         self.tableview.setModel(self.model)
-        #vbox.addStretch()
         
-        self.add_items()
+        btn = QtGui.QPushButton('Refresh')
+        vbox.addWidget(btn)
+        btn.clicked.connect(self.refresh_btn_clicked)
+        #vbox.addStretch()
+        #self.add_items()
+        
+    def refresh_btn_clicked(self):
+        
+        self.add_items() 
         
     def add_items(self):        
+        
+        num_rows = self.model.rowCount()
+        
+        for row in range(num_rows):
+            self.model.removeRow(0)
         
         node = sel_list = pm.ls(sl=True)[0]
         user_defined_attr = node.listAttr(userDefined=True, settable=True)               
@@ -42,6 +54,7 @@ class MeasureWidget(QtGui.QWidget):
             if attr.isChild():
                 print('skipping: {}'.format(attr))
                 continue
+                
             self.model.appendRow(QtGui.QStandardItem(attr.name(includeNode=False)))
              
 def show():
