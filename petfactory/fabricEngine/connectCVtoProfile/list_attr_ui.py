@@ -10,11 +10,11 @@ def maya_main_window():
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
     
               
-class MeasureWidget(QtGui.QWidget):
+class ListAttrUI(QtGui.QWidget):
     
     def __init__(self, parent=None):
         
-        super(MeasureWidget, self).__init__(parent)
+        super(ListAttrUI, self).__init__(parent)
         
         self.setWindowFlags(QtCore.Qt.Tool)
         self.setGeometry(200, 200, 200, 400)
@@ -28,13 +28,15 @@ class MeasureWidget(QtGui.QWidget):
         
         self.model = QtGui.QStandardItemModel()
         self.tableview.setModel(self.model)
+        self.tableview.horizontalHeader().setStretchLastSection(True)
+        self.model.setHorizontalHeaderLabels(['attr', 'value'])
         
         btn = QtGui.QPushButton('Refresh')
         vbox.addWidget(btn)
         btn.clicked.connect(self.refresh_btn_clicked)
         #vbox.addStretch()
         #self.add_items()
-        
+                
     def refresh_btn_clicked(self):
         
         self.add_items() 
@@ -54,11 +56,23 @@ class MeasureWidget(QtGui.QWidget):
             if attr.isChild():
                 print('skipping: {}'.format(attr))
                 continue
-                
-            self.model.appendRow(QtGui.QStandardItem(attr.name(includeNode=False)))
+
+            attr_name = attr.name(includeNode=False)                
+            attr_type = attr.type()
+            attr_value = attr.get()
+            
+            # attr name            
+            attr_item = QtGui.QStandardItem(attr_name)
+            
+            # attr value
+            value_item = QtGui.QStandardItem()
+            value_item.setData(attr_value, QtCore.Qt.EditRole)
+            
+            
+            self.model.appendRow([attr_item, value_item])
              
 def show():
-    win = MeasureWidget(parent=maya_main_window())
+    win = ListAttrUI(parent=maya_main_window())
     win.show()
 
 show()
