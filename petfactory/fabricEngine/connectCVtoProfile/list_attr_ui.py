@@ -20,6 +20,8 @@ class ListAttrUI(QtGui.QWidget):
         self.setGeometry(200, 200, 200, 400)
         self.setWindowTitle('Measure')
         
+        self.valid_attr = ['double', 'long', 'bool']
+        
         vbox = QtGui.QVBoxLayout()
         self.setLayout(vbox)
         
@@ -64,15 +66,23 @@ class ListAttrUI(QtGui.QWidget):
         for attr in attr_list:
             
             if attr.isChild():
-                print('skipping: {}'.format(attr))
+                print('Compound attr. skipping attr: {} of type: {}'.format(attr_name, attr_type))
                 continue
 
-            attr_name = attr.name(includeNode=False)                
             attr_type = attr.type()
+            attr_name = attr.name(includeNode=False)
+            #print(attr_type)
+            
+            if attr_type not in self.valid_attr:
+                print('skipping attr: {} of type: {}'.format(attr_name, attr_type))
+                continue
+                            
             attr_value = attr.get()
             
             # attr name            
             attr_item = QtGui.QStandardItem(attr_name)
+            attr_item.setCheckable(True)
+            attr_item.setCheckState(QtCore.Qt.CheckState.Checked)
             
             # attr value
             value_item = QtGui.QStandardItem()
