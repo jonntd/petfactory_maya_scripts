@@ -35,23 +35,33 @@ class ListAttrUI(QtGui.QWidget):
         vbox.addWidget(btn)
         btn.clicked.connect(self.refresh_btn_clicked)
         #vbox.addStretch()
-        #self.add_items()
                 
     def refresh_btn_clicked(self):
         
-        self.add_items() 
+        sel_list = pm.ls(sl=True)
         
-    def add_items(self):        
+        if len(sel_list) < 1:
+            pm.warning('Nothing is selected')
+            return
+            
+        node = sel_list = pm.ls(sl=True)[0]
+        attr_list = node.listAttr(userDefined=True, settable=True)  
+        
+        if len(attr_list) < 1:
+            pm.warning('No attrs found')
+            return
+            
+        self.add_items(attr_list)
+        
+        
+    def add_items(self, attr_list):        
         
         num_rows = self.model.rowCount()
         
         for row in range(num_rows):
             self.model.removeRow(0)
         
-        node = sel_list = pm.ls(sl=True)[0]
-        user_defined_attr = node.listAttr(userDefined=True, settable=True)               
-    
-        for attr in user_defined_attr:
+        for attr in attr_list:
             
             if attr.isChild():
                 print('skipping: {}'.format(attr))
