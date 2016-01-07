@@ -21,6 +21,7 @@ class ListAttrUI(QtGui.QWidget):
         self.setWindowTitle('Measure')
         
         self.valid_attr = ['double', 'long', 'bool']
+        self.unchecked_attr = ['cap2ProfileCount', 'cap1ProfileCount', 'sideProfileCount', 'dummy']
         
         vbox = QtGui.QVBoxLayout()
         self.setLayout(vbox)
@@ -69,7 +70,12 @@ class ListAttrUI(QtGui.QWidget):
                     
                 attr = self.model.item(row, 0).data(role=QtCore.Qt.EditRole)
                 value = self.model.item(row, 1).data(role=QtCore.Qt.EditRole)
-                pm.setAttr('{}.{}'.format(sel, attr), value)
+                
+                try:
+                    pm.setAttr('{}.{}'.format(sel, attr), value)
+                    
+                except pm.general.MayaAttributeError as e:
+                    print('Could not set attr. {}'.format(e))
 
                       
     def copy_btn_clicked(self):
@@ -116,7 +122,11 @@ class ListAttrUI(QtGui.QWidget):
             # attr name            
             attr_item = QtGui.QStandardItem(attr_name)
             attr_item.setCheckable(True)
-            attr_item.setCheckState(QtCore.Qt.CheckState.Checked)
+            
+            if attr_name not in self.unchecked_attr:
+                attr_item.setCheckState(QtCore.Qt.CheckState.Checked)
+            else:
+                attr_item.setCheckState(QtCore.Qt.CheckState.Unchecked)
             
             # attr value
             value_item = QtGui.QStandardItem()
@@ -129,4 +139,4 @@ def show():
     win = ListAttrUI(parent=maya_main_window())
     win.show()
 
-show()
+#show()

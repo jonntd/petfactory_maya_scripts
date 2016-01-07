@@ -5,7 +5,7 @@ from shiboken import wrapInstance
 import maya.OpenMayaUI as omui
 import petfactory.gui.simple_widget as simple_widget
 reload(simple_widget)
-
+'''
 def get_attr_dict(canvas_node, allowed_attr):
     
     user_defined_attr = canvas_node.listAttr(userDefined=True, settable=True)               
@@ -77,7 +77,7 @@ def copy_from_sel():
 
     else:
         pm.warning('Make sure that selected nodes are canvasNodes!')
-
+'''
 
 def connect_selected_crv(crv_xfo, canvas_node, profile, profile_count):
     
@@ -182,15 +182,17 @@ class Panel(QtGui.QWidget):
         p.setColor(break_con_btn.backgroundRole(), QtGui.QColor(100,0,0))
         break_con_btn.setPalette(p)
 
+        '''
         # copy attr        
         copy_attr_btn = QtGui.QPushButton('Copy attr')
         vbox.addWidget(copy_attr_btn)
         copy_attr_btn.clicked.connect(self.copy_attr_btn_clicked)
-        
+        '''
+
         vbox.addStretch()
         
-    def copy_attr_btn_clicked(self):
-        copy_from_sel()
+    #def copy_attr_btn_clicked(self):
+        #copy_from_sel()
 
     def create_canvas_node_btn_clicked(self):
         
