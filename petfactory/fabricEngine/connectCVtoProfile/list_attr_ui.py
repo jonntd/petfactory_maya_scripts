@@ -33,12 +33,46 @@ class ListAttrUI(QtGui.QWidget):
         self.tableview.horizontalHeader().setStretchLastSection(True)
         self.model.setHorizontalHeaderLabels(['attr', 'value'])
         
-        btn = QtGui.QPushButton('Refresh')
-        vbox.addWidget(btn)
-        btn.clicked.connect(self.refresh_btn_clicked)
+        btn_hbox = QtGui.QHBoxLayout()
+        vbox.addLayout(btn_hbox)
+        
+        # copy attr
+        copy_btn = QtGui.QPushButton('Copy')
+        btn_hbox.addWidget(copy_btn )
+        copy_btn.clicked.connect(self.copy_btn_clicked)
+        
+        # paste attr
+        paste_btn = QtGui.QPushButton('Paste')
+        btn_hbox.addWidget(paste_btn)
+        paste_btn.clicked.connect(self.paste_btn_clicked)
+        
         #vbox.addStretch()
+    
+    def paste_btn_clicked(self):
+        
+        sel_list = pm.ls(sl=True)
+        
+        if len(sel_list) < 1:
+            pm.warning('Nothing is selected')
+            return
+            
+        num_rows = self.model.rowCount()
+        
+        for sel in sel_list:
+            
+            for row in range(num_rows):
                 
-    def refresh_btn_clicked(self):
+                attr_item = self.model.item(row, 0)
+                
+                if attr_item.checkState() == QtCore.Qt.CheckState.Unchecked:
+                    continue
+                    
+                attr = self.model.item(row, 0).data(role=QtCore.Qt.EditRole)
+                value = self.model.item(row, 1).data(role=QtCore.Qt.EditRole)
+                pm.setAttr('{}.{}'.format(sel, attr), value)
+
+                      
+    def copy_btn_clicked(self):
         
         sel_list = pm.ls(sl=True)
         
