@@ -1,18 +1,18 @@
-#canvas_node = pm.PyNode('canvasNode1')
+
 
 def buildMeshOutput():
-    
-    mesh_list = []
-    
+
     sel_list = pm.ls(sl=True)
+    mesh_list = []
     
     for sel in sel_list:
         
-        canvas_node = sel
+        if not isinstance(sel, pm.nodetypes.CanvasNode):
+            print('"{}" is not a canvas node, skipping...'.format(sel))
+            continue
         
-        attr_list = canvas_node.listAttr(userDefined=True, settable=True, readOnly=True)
-        
-        
+        attr_list = sel.listAttr(userDefined=True, settable=True, readOnly=True)
+                
         for attr in attr_list:
             
             if attr.type() != 'mesh':
