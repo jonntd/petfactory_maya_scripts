@@ -1,0 +1,12 @@
+{
+	"CAR":{"nodeName":"CAR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+		{
+			"INT":{"nodeName":"INTERIOR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+			]}
+		},
+		{
+			"INT":{"nodeName":"INTERIOR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+			]}
+		},
+	]}
+}
