@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<node name="root" type="group">
+    <node name="A level 1" type="group" />
+    <node name="B level 1" type="group">
+        <node name="A level 2" type="group">
+            <node name="A level 3" type="switch" />
+            <node name="B level 3" type="switch">
+                <node name="A level 4" type="group" />
+                <node name="B level 4" type="switch" />
+                <node name="C level 4" type="group" />
+                <node name="D level 4" type="switch" />
+            </node>
+            <node name="C level 3" type="switch" />
+        </node>
+    </node>
+    <node name="C level 1" type="group" />
+    <node name="D level 1" type="group" />
+</node>
