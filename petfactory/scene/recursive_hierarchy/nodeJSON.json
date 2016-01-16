@@ -1,12 +1,20 @@
 {
-	"CAR":{"nodeName":"CAR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+	"CAR":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
 		{
-			"INT":{"nodeName":"INTERIOR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+			"INT":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
+				{
+					"IP":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[]}
+				},
+				{
+					"MEDIA":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[]}
+				},
+				{
+					"MEDIA_GRP":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[]}
+				}
 			]}
 		},
 		{
-			"INT":{"nodeName":"INTERIOR", "nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[
-			]}
-		},
+			"INT":{"nodeType":"group", "geoType":"INT", "useInSGUI":false, "sectuonInSGUI":0, "children":[]}
+		}
 	]}
 }
