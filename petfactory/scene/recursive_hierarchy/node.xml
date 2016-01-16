@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<node nodeName="CAR" nodeType="group" geoType="" useInorganizeSGUI="false" sectionInSGUI="0">
+	<node nodeName="IP" nodeType="group" geoType="INT" useInorganizeSGUI="true" sectionInSGUI="0" />
+	<node nodeName="MEDIA" nodeType="switch" geoType="INT" useInorganizeSGUI="true" sectionInSGUI="0" />
+</node>
