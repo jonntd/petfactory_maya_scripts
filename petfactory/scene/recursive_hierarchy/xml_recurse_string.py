@@ -18,10 +18,10 @@ def xml_recurse_string(node, parent=None, depth=-1):
 
 	if children:
 		for child in children:
-			xml_recurse(child, node, depth)
+			xml_recurse_string(child, node, depth)
 
 
 tree = ET.parse(path)
 root = tree.getroot()
 
-xml_recurse(root)
+xml_recurse_string(root)
