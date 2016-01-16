@@ -4,12 +4,12 @@ import pprint
 required_attrib = [ 'geoType',
                     'useInorganizeSGUI',
                     'nodeType',
-                    'nodeName',
+                    'name',
                     'sectionInSGUI']
 
 def validate_XML(node):
 
-    name = node.get('nodeName')
+    name = node.get('name')
     if name == '':
         print('RaiseError, the node has no name!')
         raise
@@ -66,7 +66,7 @@ def validate_XML(node):
 
 def getOrganizeSceneGraphInfo(node, info_dict):
 
-    name = node.get('nodeName')
+    name = node.get('name')
     useInorganizeSGUI = True if node.get('useInorganizeSGUI').upper() == 'TRUE' else False
     sectionInSGUI = int(node.get('sectionInSGUI'))
 
@@ -88,10 +88,29 @@ def getOrganizeSceneGraphInfo(node, info_dict):
 
     return info_dict
 
+def mayaXML(xml_node, parent=None, depth=-1):
 
-tree = ET.parse('nodeWithAttrib.xml')
+    name = xml_node.get('name') 
+    node_type = xml_node.get('nodeType')
+    
+    node = pm.group(em=True, name='{}'.format(name))
+    
+    if parent:
+        pm.parent(node, parent)
+        
+    print('{} {} {}'.format(depth*'\t', name, node_type))
+    depth += 1
+    
+    children = xml_node.getchildren()
+    if children:
+        for child in children:
+            mayaXML(child, node, depth)
+
+tree = ET.parse('/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/nodeWithAttrib.xml')
 validate_XML(tree.getroot())
 
-info_dict = {'sectionInSGUI':{}, 'other':[]}
+info_dict = {'sectionInSGUI':{}}
 getOrganizeSceneGraphInfo(tree.getroot(), info_dict)
 pprint.pprint(info_dict)
+
+#mayaXML(tree.getroot())

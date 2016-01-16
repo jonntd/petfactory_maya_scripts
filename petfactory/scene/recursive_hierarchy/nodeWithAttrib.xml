@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 
-<node nodeName="CAR" nodeType="group" geoType="NONE" useInorganizeSGUI="False" sectionInSGUI="0">
-	<node nodeName="IP" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
-	<node nodeName="IP_CENTER" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
-	<node nodeName="MEDIA" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
-	<node nodeName="MEDIA_SEAT" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
+<node name="root" nodeType="group" geoType="NONE" useInorganizeSGUI="False" sectionInSGUI="0">
+    <node name="A level 1" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
+    <node name="B level 1" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
+    <node name="C level 1" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0">
+        <node name="A level 2" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1" />
+        <node name="B level 2" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1" />
+        <node name="C level 2" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1">
+            <node name="A level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
+            <node name="B level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
+            <node name="C level 3" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
+        </node>
+    </node>
 </node>
