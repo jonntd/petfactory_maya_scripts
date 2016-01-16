@@ -1,6 +1,19 @@
 import xml.etree.ElementTree as ET
 import pprint
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class NameError(Error):
+    pass
+
+class AttributeError(Error):
+    pass
+
+class ValueError(Error):
+    pass
+
 required_attrib = [ 'geoType',
                     'useInorganizeSGUI',
                     'nodeType',
@@ -11,15 +24,13 @@ def validate_XML(node):
 
     name = node.get('name')
     if name == '':
-        print('RaiseError, the node has no name!')
-        raise
+        raise NameError('the node has no name!')
 
     # make sure that all the required attributes exist and validate their values
     attrbs = node.attrib
     for attrb, value in attrbs.iteritems():
         if not attrb in required_attrib:
-            print('RaiseError, unexpected attribute! node: {}'.format(name))
-            raise
+            raise AttributeError('Unexpected attribute: "{}" in node: "{}"'.format(attrb, name))
 
         if attrb == 'geoType':
             if value.upper() == 'NONE':
@@ -29,8 +40,7 @@ def validate_XML(node):
             elif value.upper() == 'EXT':
                 geoType = 'EXT'
             else:
-                print('RaiseError, unexpected value! node: {}'.format(name))
-                raise
+                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
         if attrb == 'useInorganizeSGUI':
             if value.upper() == 'FALSE':
@@ -38,8 +48,7 @@ def validate_XML(node):
             elif value.upper() == 'TRUE':
                 useInorganizeSGUI = True
             else:
-                print('RaiseError, unexpected value! node: {}'.format(name))
-                raise
+                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
         if attrb == 'nodeType':
             if value.upper() == 'GROUP':
@@ -47,15 +56,13 @@ def validate_XML(node):
             elif value.upper() == 'SWITCH':
                 nodeType = "Switch"
             else:
-                print('RaiseError, unexpected value! node: {}'.format(name))
-                raise
+                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
         if attrb == 'sectionInSGUI':
             try:
                 sectionInSGUI = int(value)
             except ValueError as e:
-                print('RaiseError, unexpected value! node: {}'.format(name))
-                raise
+                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
     # recurse
     children = node.getchildren()
@@ -73,12 +80,10 @@ def getOrganizeSceneGraphInfo(node, info_dict):
     # get info of placement inte organize scenegraph UI
     if useInorganizeSGUI:
 
-        sectionInSGUI_dict = info_dict.get('sectionInSGUI')
+        if sectionInSGUI not in info_dict:
+            info_dict[sectionInSGUI] = []
 
-        if sectionInSGUI not in sectionInSGUI_dict:
-            sectionInSGUI_dict[sectionInSGUI] = []
-
-        sectionInSGUI_dict[sectionInSGUI].append(name)
+        info_dict[sectionInSGUI].append(name)
 
     # recurse
     children = node.getchildren()
@@ -106,11 +111,35 @@ def mayaXML(xml_node, parent=None, depth=-1):
         for child in children:
             mayaXML(child, node, depth)
 
-tree = ET.parse('/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/nodeWithAttrib.xml')
-validate_XML(tree.getroot())
 
-info_dict = {'sectionInSGUI':{}}
-getOrganizeSceneGraphInfo(tree.getroot(), info_dict)
-pprint.pprint(info_dict)
+def createVredScenegraph(XMLpath):
 
-#mayaXML(tree.getroot())
+    tree = ET.parse(XMLpath)
+    validate_XML(tree.getroot())
+    #mayaXML(tree.getroot())
+
+def createOrganizeVredUI(XMLpath):
+
+    tree = ET.parse(XMLpath)
+    validate_XML(tree.getroot())
+
+    info_dict = {}
+    getOrganizeSceneGraphInfo(tree.getroot(), info_dict)
+
+    keys = info_dict.keys()
+    keys.sort()
+
+    for index, key in enumerate(keys):
+        name_list = info_dict[key]
+        if index > 0:
+            print('--------')
+        for name in name_list:
+            print(name)
+
+
+path = r'/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/nodeWithAttrib.xml'
+
+createVredScenegraph(path)
+
+createOrganizeVredUI(path)
+

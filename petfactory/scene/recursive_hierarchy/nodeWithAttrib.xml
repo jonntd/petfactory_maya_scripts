@@ -9,7 +9,11 @@
         <node name="C level 2" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1">
             <node name="A level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
             <node name="B level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
-            <node name="C level 3" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
+            <node name="C level 3" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" >
+                <node name="A level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
+                <node name="B level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
+                <node name="C level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
+            </node>
         </node>
     </node>
 </node>
