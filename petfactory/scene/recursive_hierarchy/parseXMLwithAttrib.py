@@ -14,12 +14,12 @@ class AttributeError(Error):
 class ValueError(Error):
     pass
 
-required_attrib = [ 'name',
+requiredAttrib = [ 'name',
                     'nodeType',
                     'prefix',
                     'sectionInSGUI']
 
-def validate_XML(node):
+def validateXML(node):
 
     name = node.get('name')
     if name == '':
@@ -28,7 +28,7 @@ def validate_XML(node):
     # make sure that all the required attributes exist and validate their values
     attrbs = node.attrib
     for attrb, value in attrbs.iteritems():
-        if not attrb in required_attrib:
+        if not attrb in requiredAttrib:
             raise AttributeError('Unexpected attribute: "{}" in node: "{}"'.format(attrb, name))
 
         if attrb == 'nodeType':
@@ -61,75 +61,83 @@ def validate_XML(node):
     children = node.getchildren()
     if children:
         for child in children:
-            validate_XML(child)
+            validateXML(child)
 
 
-def getOrganizeSceneGraphInfo(node, info_dict):
+def getOrganizeSceneGraphInfo(xmlNode, infoDict):
 
-    name = node.get('name')
-    sectionInSGUI = int(node.get('sectionInSGUI'))
+    name = xmlNode.get('name') 
+    nodeType = xmlNode.get('nodeType')
+    prefix = xmlNode.get('prefix')
+    sectionInSGUI = int(xmlNode.get('sectionInSGUI'))
 
     # get info of placement inte organize scenegraph UI
     if sectionInSGUI > 0:
 
-        if sectionInSGUI not in info_dict:
-            info_dict[sectionInSGUI] = []
+        if sectionInSGUI not in infoDict:
+            infoDict[sectionInSGUI] = []
 
-        info_dict[sectionInSGUI].append(name)
+        infoDict[sectionInSGUI].append(buildVredName(name, nodeType, prefix))
 
     # recurse
-    children = node.getchildren()
+    children = xmlNode.getchildren()
     if children:
         for child in children:
-            getOrganizeSceneGraphInfo(child, info_dict)
+            getOrganizeSceneGraphInfo(child, infoDict)
 
-    return info_dict
+    return infoDict
 
-def mayaXML(xml_node, parent=None, depth=-1):
+def buildVredName(name, nodeType, prefix):
 
-    name = xml_node.get('name') 
-    nodeType = xml_node.get('nodeType')
-    switch_prefix = 'G__' if nodeType.upper() == 'SWITCH' else ''
-    prefix = xml_node.get('prefix')
+    switchPrefix = 'G__' if nodeType.upper() == 'SWITCH' else ''
     prefix = prefix if prefix == '' else '{}_'.format(prefix)  
-    nodeName = '{}{}{}'.format(switch_prefix, prefix, name)
+    nodeName = '{}{}{}'.format(switchPrefix, prefix, name)
+    return nodeName
+
+def mayaXML(xmlNode, parent=None, depth=-1):
+
+    name = xmlNode.get('name') 
+    nodeType = xmlNode.get('nodeType')
+    prefix = xmlNode.get('prefix')
+    nodeName = buildVredName(name, nodeType, prefix)
+
     print('{}{}'.format(depth*'\t', nodeName))
 
-    node = pm.group(em=True, name=nodeName)
+    mayaNode = pm.group(em=True, name=nodeName)
 
     if parent:
-        pm.parent(node, parent)
+        pm.parent(mayaNode, parent)
 
     depth += 1
 
-    children = xml_node.getchildren()
+    children = xmlNode.getchildren()
     if children:
         for child in children:
-            mayaXML(child, node, depth)
+            mayaXML(child, mayaNode, depth)
 
 
 def createVredScenegraph(XMLpath):
 
     tree = ET.parse(XMLpath)
-    validate_XML(tree.getroot())
+    validateXML(tree.getroot())
     #mayaXML(tree.getroot())
 
 def createOrganizeVredUI(XMLpath):
 
     tree = ET.parse(XMLpath)
-    validate_XML(tree.getroot())
+    validateXML(tree.getroot())
 
-    info_dict = {}
-    getOrganizeSceneGraphInfo(tree.getroot(), info_dict)
+    infoDict = {}
+    getOrganizeSceneGraphInfo(tree.getroot(), infoDict)
 
-    keys = info_dict.keys()
+    keys = infoDict.keys()
     keys.sort()
 
     for index, key in enumerate(keys):
-        name_list = info_dict[key]
+        nameList = infoDict[key]
         if index > 0:
             print('--------')
-        for name in name_list:
+        for name in nameList:
             print(name)
 
 
