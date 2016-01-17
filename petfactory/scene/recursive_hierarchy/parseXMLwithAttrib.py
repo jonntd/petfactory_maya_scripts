@@ -14,10 +14,9 @@ class AttributeError(Error):
 class ValueError(Error):
     pass
 
-required_attrib = [ 'geoType',
-                    'useInorganizeSGUI',
+required_attrib = [ 'name',
                     'nodeType',
-                    'name',
+                    'prefix',
                     'sectionInSGUI']
 
 def validate_XML(node):
@@ -32,8 +31,17 @@ def validate_XML(node):
         if not attrb in required_attrib:
             raise AttributeError('Unexpected attribute: "{}" in node: "{}"'.format(attrb, name))
 
-        if attrb == 'geoType':
-            if value.upper() == 'NONE':
+        if attrb == 'nodeType':
+            if value.upper() == 'GROUP':
+                nodeType = "Group"
+            elif value.upper() == 'SWITCH':
+                nodeType = "Switch"
+            else:
+                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
+
+
+        if attrb == 'prefix':
+            if value.upper() == '':
                 geoType = None
             elif value.upper() == 'INT':
                 geoType = 'INT'
@@ -42,21 +50,6 @@ def validate_XML(node):
             else:
                 raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
-        if attrb == 'useInorganizeSGUI':
-            if value.upper() == 'FALSE':
-                useInorganizeSGUI = False
-            elif value.upper() == 'TRUE':
-                useInorganizeSGUI = True
-            else:
-                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
-
-        if attrb == 'nodeType':
-            if value.upper() == 'GROUP':
-                nodeType = "Group"
-            elif value.upper() == 'SWITCH':
-                nodeType = "Switch"
-            else:
-                raise ValueError('Unexpected value: "{}" of attribute: "{}" in node: "{}"'.format(value, attrb, name))
 
         if attrb == 'sectionInSGUI':
             try:
@@ -74,11 +67,10 @@ def validate_XML(node):
 def getOrganizeSceneGraphInfo(node, info_dict):
 
     name = node.get('name')
-    useInorganizeSGUI = True if node.get('useInorganizeSGUI').upper() == 'TRUE' else False
     sectionInSGUI = int(node.get('sectionInSGUI'))
 
     # get info of placement inte organize scenegraph UI
-    if useInorganizeSGUI:
+    if sectionInSGUI > 0:
 
         if sectionInSGUI not in info_dict:
             info_dict[sectionInSGUI] = []
@@ -96,16 +88,20 @@ def getOrganizeSceneGraphInfo(node, info_dict):
 def mayaXML(xml_node, parent=None, depth=-1):
 
     name = xml_node.get('name') 
-    node_type = xml_node.get('nodeType')
-    
-    node = pm.group(em=True, name='{}'.format(name))
-    
+    nodeType = xml_node.get('nodeType')
+    switch_prefix = 'G__' if nodeType.upper() == 'SWITCH' else ''
+    prefix = xml_node.get('prefix')
+    prefix = prefix if prefix == '' else '{}_'.format(prefix)  
+    nodeName = '{}{}{}'.format(switch_prefix, prefix, name)
+    print('{}{}'.format(depth*'\t', nodeName))
+
+    node = pm.group(em=True, name=nodeName)
+
     if parent:
         pm.parent(node, parent)
-        
-    print('{} {} {}'.format(depth*'\t', name, node_type))
+
     depth += 1
-    
+
     children = xml_node.getchildren()
     if children:
         for child in children:

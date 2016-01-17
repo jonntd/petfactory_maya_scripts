@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 
-<node name="root" nodeType="group" geoType="NONE" useInorganizeSGUI="False" sectionInSGUI="0">
-    <node name="A level 1" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
-    <node name="B level 1" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0" />
-    <node name="C level 1" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="0">
-        <node name="A level 2" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1" />
-        <node name="B level 2" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1" />
-        <node name="C level 2" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="1">
-            <node name="A level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
-            <node name="B level 3" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" />
-            <node name="C level 3" nodeType="group" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="2" >
-                <node name="A level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
-                <node name="B level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
-                <node name="C level 4" nodeType="switch" geoType="INT" useInorganizeSGUI="True" sectionInSGUI="3" />
+<node name="CAR" nodeType="group" prefix="" sectionInSGUI="0">
+    <node name="A level 1" nodeType="switch" prefix="INT" sectionInSGUI="1" />
+    <node name="B level 1" nodeType="group" prefix="INT" sectionInSGUI="0" />
+    <node name="C level 1" nodeType="group" prefix="INT" sectionInSGUI="0">
+        <node name="A level 2" nodeType="group" prefix="INT" sectionInSGUI="2" />
+        <node name="B level 2" nodeType="switch" prefix="INT" sectionInSGUI="0" />
+        <node name="C level 2" nodeType="switch" prefix="INT" sectionInSGUI="2">
+            <node name="A level 3" nodeType="switch" prefix="INT" sectionInSGUI="0" />
+            <node name="B level 3" nodeType="switch" prefix="INT" sectionInSGUI="3" />
+            <node name="C level 3" nodeType="group" prefix="INT" sectionInSGUI="3" >
+                <node name="A level 4" nodeType="switch" prefix="EXT" sectionInSGUI="0" />
+                <node name="B level 4" nodeType="switch" prefix="EXT" sectionInSGUI="0" />
+                <node name="C level 4" nodeType="switch" prefix="EXT" sectionInSGUI="4" />
             </node>
         </node>
     </node>
