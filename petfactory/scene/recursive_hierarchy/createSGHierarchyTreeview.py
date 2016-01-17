@@ -1,4 +1,7 @@
+ # -*- coding: utf-8 -*-
+ 
 import xml.etree.ElementTree as ET
+import xml.dom.minidom
 import pymel.core as pm
 from PySide import QtCore, QtGui
 from shiboken import wrapInstance
@@ -80,10 +83,28 @@ class UI(QtGui.QWidget):
                 
         
     def print_btn_clicked(self):
-        root = self.model.invisibleRootItem()
-        ret_dict = {}
-        self.recurse(root, -1, ret_dict)
-        #pprint.pprint(ret_dict)
+
+        if(self.treeview.selectionModel().hasSelection()):
+
+            for index in self.treeview.selectedIndexes():
+
+                row = index.row()
+                item = self.model.itemFromIndex(index)
+
+                xmlRoot = ET.Element('root')                
+                self.exportTreviewXML(item, -1, xmlRoot)
+                xmlString = ET.tostring(xmlRoot)
+                miniDomXml = xml.dom.minidom.parseString(xmlString)
+                pp = miniDomXml.toprettyxml()
+                
+                
+                fname, _ = QtGui.QFileDialog.getSaveFileName(self, caption='Save XML', directory='/home', filter='*.xml')
+
+                if(fname):
+                    f = open(fname,'w')
+                    f.write(pp) # python will convert \n to os.linesep
+                    f.close() # you can omit in most cases as the destructor will call if
+
 
     def setNodeType(self, itemList, nodeType):
         
@@ -103,7 +124,32 @@ class UI(QtGui.QWidget):
             pixmap.fill(QtGui.QColor(color))
             icon = QtGui.QIcon(pixmap)        
             item.setIcon(icon)
+            
+    
+    def exportTreviewXML(self, item, depth, parent):
         
+        name = item.text()
+        nodeType = item.data(role=QtCore.Qt.UserRole + 1)
+        #print('{}{}'.format('\t'*depth, name))
+        depth += 1
+        
+        xmlNode = ET.Element('node')
+        xmlNode.set('name', name)
+        xmlNode.set('nodeType', str(nodeType))
+        xmlNode.set('prefix', 'INT')
+        xmlNode.set('sectionInSGUI', '0')
+
+        
+        if parent is not None:
+            parent.append(xmlNode)
+
+        if item.hasChildren():
+            for i in range(item.rowCount()):
+                child = item.child(i)
+                self.exportTreviewXML(child, depth, xmlNode)
+                
+                
+                                                            
     def recurse(self, item, depth, ret_dict):
 
         # returns the number of child item rows that the item has.
