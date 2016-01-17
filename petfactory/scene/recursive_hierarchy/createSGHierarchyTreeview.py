@@ -12,6 +12,47 @@ from functools import partial
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
+    
+    
+def recurseHierarchy(mayaNode, xmlParent):
+    
+    xmlNode = ET.Element('node')
+    xmlNode.set('name', mayaNode.name())
+    xmlNode.set('nodeType', 'group')
+    xmlNode.set('prefix', 'INT')
+    xmlNode.set('sectionInSGUI', '1')
+    xmlParent.append(xmlNode)
+    
+    numChildren = mayaNode.numChildren()
+    print(numChildren)
+    if numChildren > 0:
+        
+        children = mayaNode.getChildren()
+        for child in children:
+            print(child)
+            recurseHierarchy(child, xmlNode)
+
+def exportHierarchyXML():
+    
+    sel = pm.ls(sl=True)
+    if len(sel) < 1:
+        print('Nothing is selected!')
+        return
+        
+    mayaNode = sel[0]
+    xmlRoot = ET.Element('root')
+    recurseHierarchy(mayaNode, xmlRoot)
+    xmlString = ET.tostring(xmlRoot)
+    miniDomXml = xml.dom.minidom.parseString(xmlString)
+    prettyXML = miniDomXml.toprettyxml()
+    
+    fname, _ = QtGui.QFileDialog.getSaveFileName(caption='Save XML', directory='/home', filter='*.xml')
+
+    if(fname):
+        f = open(fname,'w')
+        f.write(prettyXML)
+        f.close()
+    
 
 class UI(QtGui.QWidget):
  
@@ -22,10 +63,39 @@ class UI(QtGui.QWidget):
         
         self.resize(300,500)
         self.setWindowTitle("UI")
+        
+        # main layout
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.setContentsMargins(0,0,0,0)
+        self.setLayout(mainLayout)
+        
+        self.menubar = QtGui.QMenuBar()
+        mainLayout.addWidget(self.menubar)
+        fileMenu = self.menubar.addMenu('File')
  
+        # save 
+        self.saveXMLAction = QtGui.QAction('Save XML', self)
+        self.saveXMLAction.triggered.connect(self.saveXML)
+        fileMenu.addAction(self.saveXMLAction)
+        
+        # load
+        self.loadXMLAction = QtGui.QAction('Load XML', self)
+        self.loadXMLAction.triggered.connect(self.loadXML)
+        fileMenu.addAction(self.loadXMLAction)
+        
+        
+        # load
+        self.fromSceneGraphAction = QtGui.QAction('Export SceneGraph', self)
+        self.fromSceneGraphAction.triggered.connect(exportHierarchyXML)
+        fileMenu.addAction(self.fromSceneGraphAction)
+        
+        
+        
+       
         # layout
         vbox = QtGui.QVBoxLayout()
-        self.setLayout(vbox)
+        vbox.setContentsMargins(6,6,6,6)
+        mainLayout.addLayout(vbox)
         
         # treeview
         self.treeview = QtGui.QTreeView()
@@ -65,11 +135,6 @@ class UI(QtGui.QWidget):
         remove_btn.clicked.connect(self.remove_btn_clicked)
         
         
-        # button
-        print_btn = QtGui.QPushButton('Save')
-        vbox.addWidget(print_btn)
-        print_btn.clicked.connect(self.print_btn_clicked)
-        
     def change_node_type(self, nodeType):
         
         if(self.treeview.selectionModel().hasSelection()):
@@ -81,8 +146,20 @@ class UI(QtGui.QWidget):
             print('Nothin is selected!')
                 
                 
-        
-    def print_btn_clicked(self):
+    def loadXML(self):
+                
+        fname, _ = QtGui.QFileDialog.getOpenFileName(self, caption='Load XML', directory='/home', filter='*.xml')
+
+        if(fname):
+            f = open(fname, 'r')
+            data = f.read()
+            f.close()
+            
+            tree = ET.fromstring(data)
+            xml_recurse_pyside(tree, win.get_root_item())
+            
+                        
+    def saveXML(self):
 
         if(self.treeview.selectionModel().hasSelection()):
 
@@ -275,10 +352,9 @@ win.move(100,150)
 
 
 #path = r'/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/test.xml'
-path = r'/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/nodeWithAttrib.xml'
-valid_types = ['group', 'switch']
+#path = r'/Users/johan/Dev/maya/petfactory_maya_scripts/petfactory/scene/recursive_hierarchy/nodeWithAttrib.xml'
+#valid_types = ['group', 'switch']
 
-tree = ET.parse(path)
-root = tree.getroot()
-
-xml_recurse_pyside(root, win.get_root_item())
+#tree = ET.parse(path)
+#root = tree.getroot()
+#xml_recurse_pyside(root, win.get_root_item())
