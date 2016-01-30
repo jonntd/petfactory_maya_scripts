@@ -4,7 +4,7 @@ import maya.cmds as cmds
 def setNodeState(switchName, state):
     
     if not cmds.objExists(switchName):
-        print('No object matches name: {}'.format(switchName))
+        print('{} -> No object matches this switch name'.format(switchName))
         return
     
     childList = cmds.listRelatives(switchName, children=True)
@@ -27,4 +27,51 @@ switchName = 'G__ROOF'
 state = 'ROOF_SUNROOF'
 vis = True
 
-setNodeState(switchName, state)
+#setNodeState(switchName, state)
+
+
+def setMaterialState(switchName, state):
+    
+    # validate switchName
+    if not cmds.objExists(switchName):
+        print('{} -> No object matches this switch name'.format(switchName))
+        return
+        
+    if not cmds.objectType(switchName, isType='objectSet'):
+        print('{} -> is not a set'.format(switchName))
+        return
+        
+    memberList = cmds.sets(switchName, q=True)
+    
+    if len(memberList) < 1:
+        print('{} -> the set has no members"'.format(switchName))
+        return
+    
+    
+    # validate state
+    if not cmds.objExists(state):
+        print('{} -> No object matches the state "{}"'.format(switchName, state))
+        return
+    
+    if not cmds.objectType(state, isAType='shadingDependNode'):
+        print('{} -> The current state is not a shadingDependNode "{}"'.format(switchName, state))
+        return
+         
+    sgList = cmds.listConnections(state, type='shadingEngine')     
+    
+    if not sgList:
+        print('{} -> Could not get the shadingGroup of state "{}"'.format(switchName, state))
+        return
+        
+    if len(sgList) < 1:
+        print('{} -> The material has no ShadingGroup "{}"'.format(switchName, state))
+        return
+      
+    cmds.sets(memberList, edit=True, forceElement=sgList[0])
+            
+        
+    
+switchName = 'T__TEST'
+state = 'BLUE'
+
+setMaterialState(switchName, state)
