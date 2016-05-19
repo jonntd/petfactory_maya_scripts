@@ -61,6 +61,7 @@ def maya_main_window():
     
 class Communicate(QtCore.QObject):
     
+    startCleanup = QtCore.Signal()
     cleanupDone = QtCore.Signal(int)
             
 class MeasureWidget(QtGui.QWidget):
@@ -75,6 +76,8 @@ class MeasureWidget(QtGui.QWidget):
         
         self.c = Communicate()
         self.c.cleanupDone.connect(self.cleanupDone)
+        self.c.startCleanup.connect(self.startCleanup)
+        
         
         vbox = QtGui.QVBoxLayout(self)
         
@@ -82,16 +85,13 @@ class MeasureWidget(QtGui.QWidget):
         vbox.addWidget(self.deleteHiddenCB)
         
         self.selectNodesCB = QtGui.QCheckBox('Select Nodes to delete')
+        self.selectNodesCB.setChecked(True)
         vbox.addWidget(self.selectNodesCB)
         
         vbox.addStretch()
         
         self.progressLabel = QtGui.QLabel()
         self.progressLabel.setAlignment(QtCore.Qt.AlignHCenter)
-        
-        #self.movie = QtGui.QMovie(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'indicator.gif'))
-        self.movie = QtGui.QMovie(os.path.join('/Users/johan/Desktop', 'indicator.gif'))
-        self.progressLabel.setMovie(self.movie)
         vbox.addWidget(self.progressLabel)
         
         
@@ -100,13 +100,17 @@ class MeasureWidget(QtGui.QWidget):
         vbox.addWidget(cleanupButton)
         
 
+    def startCleanup(self):
+        self.progressLabel.setText('working...')
+        self.update()
+        
     def cleanupDone(self, duration):
         print 'The hierarchy cleanup took: {} seconds'.format(duration)
-        self.movie.stop()
-        self.progressLabel.setMovie(None)
+        self.progressLabel.setText('Cleanup done in: {} sec'.format(duration))
         
     def cleanup(self, root, removeHidden, selectNodes):
 
+        self.c.startCleanup.emit()
         st = datetime.now()
         shapeDagSet = set()
         getValidNodes(root, shapeDagSet, removeHidden)
@@ -127,10 +131,7 @@ class MeasureWidget(QtGui.QWidget):
         if len(selList) < 1:
             print('Nothing is selected!')
             return
-        
-        
-        self.movie.start()
-           
+                          
         self.cleanup(   selList[0],
                         removeHidden=self.deleteHiddenCB.isChecked(),
                         selectNodes=self.selectNodesCB.isChecked())
