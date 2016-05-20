@@ -53,17 +53,11 @@ def deleteNotInSet(node, shapeDagSet, deleteList):
     for child in childList:    
         deleteNotInSet(child, shapeDagSet, deleteList)
 
-    
-
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtGui.QWidget)
-    
-class Communicate(QtCore.QObject):
-    
-    startCleanup = QtCore.Signal()
-    cleanupDone = QtCore.Signal(int)
-            
+
+
 class MeasureWidget(QtGui.QWidget):
     
     def __init__(self, parent=None):
@@ -74,11 +68,7 @@ class MeasureWidget(QtGui.QWidget):
         self.setGeometry(200, 200, 180, 100)
         self.setWindowTitle('DAG Cleanup')
         
-        self.c = Communicate()
-        self.c.cleanupDone.connect(self.cleanupDone)
-        self.c.startCleanup.connect(self.startCleanup)
-        
-        
+
         vbox = QtGui.QVBoxLayout(self)
         
         self.deleteHiddenCB = QtGui.QCheckBox('Delete Hidden')
@@ -90,57 +80,65 @@ class MeasureWidget(QtGui.QWidget):
         
         vbox.addStretch()
         
-        self.progressLabel = QtGui.QLabel()
-        self.progressLabel.setAlignment(QtCore.Qt.AlignHCenter)
-        vbox.addWidget(self.progressLabel)
-        
-        
         cleanupButton = QtGui.QPushButton('Cleanup')
+        cleanupButton.installEventFilter(self)
         cleanupButton.clicked.connect(self.cleanupButtonClicked)
         vbox.addWidget(cleanupButton)
         
-
-    def startCleanup(self):
-        self.progressLabel.setText('working...')
-        self.update()
+        self.statusbar = QtGui.QStatusBar()
+        vbox.addWidget(self.statusbar)
         
-    def cleanupDone(self, duration):
-        print 'The hierarchy cleanup took: {} seconds'.format(duration)
-        self.progressLabel.setText('Cleanup done in: {} sec'.format(duration))
+        self.statusbar.setSizeGripEnabled(False)
         
-    def cleanup(self, root, removeHidden, selectNodes):
+    def eventFilter(self, object, event):
 
-        self.c.startCleanup.emit()
+        if event.type() == QtCore.QEvent.HoverEnter:
+            self.statusbar.showMessage('May take several seconds')
+            return True
+            
+        if event.type() == QtCore.QEvent.HoverLeave:
+            #self.statusbar.clearMessage()
+            return True
+            
+        return False
+                
+                
+        
+    def cleanup(self):
+        
+        selList = pm.ls(sl=True)
+        if len(selList) < 1:
+            print('Nothing is selected')
+            return
+            
+        if not isinstance(selList[0], pm.nodetypes.Transform):
+            print('Please select a transform')
+            return
+                          
         st = datetime.now()
+        
         shapeDagSet = set()
-        getValidNodes(root, shapeDagSet, removeHidden)
+        getValidNodes(selList[0], shapeDagSet, removeHidden=self.deleteHiddenCB.isChecked())
+        
         deleteList = []
-        deleteNotInSet(root, shapeDagSet, deleteList)
-        if selectNodes:
+        deleteNotInSet(selList[0], shapeDagSet, deleteList)
+        
+        if self.selectNodesCB.isChecked():
             pm.select(deleteList)
+            
         else:
             pm.delete(deleteList)
+            
         et = datetime.now()
-
-        self.c.cleanupDone.emit((et-st).seconds)
+        self.statusbar.showMessage('Done in {} sec'.format((et-st).seconds))
     
     
     def cleanupButtonClicked(self):
+        self.cleanup()
 
-        selList = pm.ls(sl=True)
-        if len(selList) < 1:
-            print('Nothing is selected!')
-            return
-                          
-        self.cleanup(   selList[0],
-                        removeHidden=self.deleteHiddenCB.isChecked(),
-                        selectNodes=self.selectNodesCB.isChecked())
-        
         
 def show():
     win = MeasureWidget(parent=maya_main_window())
     win.show()
     
-show()
-
-
+#show()
