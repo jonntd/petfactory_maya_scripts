@@ -26,8 +26,18 @@ class BaseWin(QtGui.QWidget):
         vbox = QtGui.QVBoxLayout(self)
 
         self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(['Node', 'Triangles'])
+
+        self.proxyModel = QtGui.QSortFilterProxyModel()
+        self.proxyModel.setSourceModel(self.model)
 
         self.tableView = QtGui.QTableView()
+        self.tableView.setModel(self.proxyModel)
+        self.tableView.setSortingEnabled(True)
+
+        header = self.tableView.horizontalHeader()
+        header.setStretchLastSection(True)
+
         self.tableView.setModel(self.model)
         self.tableView.setIconSize(QtCore.QSize(self.iconWidth, self.iconHeight))
         vbox.addWidget(self.tableView)
@@ -36,6 +46,8 @@ class BaseWin(QtGui.QWidget):
         #self.populateTreeview('Door 50%', .50, self.model)
         #self.populateTreeview('Wheel 75%', .75, self.model)
         self.populateFromDict()
+
+        self.tableView.setColumnWidth(0, 175)
 
     def populateFromDict(self):
         
@@ -176,7 +188,5 @@ def show():
     win = BaseWin(parent=maya_main_window())
     win.show()
     
-show()
-
-
+#show()
 
