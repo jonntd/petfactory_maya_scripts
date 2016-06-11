@@ -50,6 +50,10 @@ class BaseWin(QtGui.QWidget):
         self.barFrameColor = QtGui.QColor(100, 100, 100, 255)
         self.iconActiveColor = QtGui.QColor(240, 170, 50, 255)
 
+        self.highColor = QtGui.QColor(219, 148, 86, 255)
+        self.lowColor = QtGui.QColor(88, 165, 204, 255)
+        self.midColor = QtGui.QColor(85, 171, 100, 255)
+
         # layout
         vbox = QtGui.QVBoxLayout(self)
 
@@ -94,13 +98,25 @@ class BaseWin(QtGui.QWidget):
         barWidth = vertValue * self.iconWidth
 
         pixmap = QtGui.QPixmap(self.iconWidth, self.iconHeight)
+
+
         pixmap.fill(self.iconBgColor)
 
         iconRect = QtCore.QRect(0, self.iconEdgeOffset, self.iconWidth-1, self.iconHeight-self.iconEdgeOffset*2)
         barRect = QtCore.QRect(0, self.iconEdgeOffset, barWidth-1, self.iconHeight-self.iconEdgeOffset*2)
 
         painter = QtGui.QPainter(pixmap)
-        painter.fillRect(barRect, self.iconActiveColor)
+
+        if vertValue > .9:
+            color = self.highColor
+
+        elif vertValue > .75:
+            color = self.midColor
+
+        else:
+            color = self.lowColor
+
+        painter.fillRect(barRect, color)
 
         painter.setBrush(QtCore.Qt.NoBrush)
         pen = QtGui.QPen()
