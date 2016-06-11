@@ -20,21 +20,17 @@ class TableView(QtGui.QTableView):
         if row < 0:
             return
 
-        name = self.model().item(row).text()
+        item = self.model().item(row)
+        dagPath = item.data(QtCore.Qt.UserRole+1)
 
         self.menu = QtGui.QMenu(self)
         renameAction = QtGui.QAction('Select Node', self)
-        renameAction.triggered.connect(partial(self.selectNode, name))
+        renameAction.triggered.connect(partial(self.selectNode, dagPath))
         self.menu.addAction(renameAction)
-        # add other required actions
         self.menu.popup(QtGui.QCursor.pos())
-
-        
 
     def selectNode(self, name):
         pm.select(name)
-        #print self.model
-
         
 class BaseWin(QtGui.QWidget):
     
@@ -75,32 +71,12 @@ class BaseWin(QtGui.QWidget):
         self.tableView.setIconSize(QtCore.QSize(self.iconWidth, self.iconHeight))
         vbox.addWidget(self.tableView)
         
-        #self.populateTreeview('Roof 25%', .25, self.model)
-        #self.populateTreeview('Door 50%', .50, self.model)
-        #self.populateTreeview('Wheel 75%', .75, self.model)
         self.populateFromDict()
-
         self.tableView.setColumnWidth(0, 175)
-
-        #self.tableView.clicked.connect(self.tableViewClicked)
-
-        #self.tableView.installEventFilter(self)
-
-
-    #def eventFilter(self, widget, event):
-    #
-    #    if event.type() == QtCore.QEvent.KeyPress:
-    #        print 12
-    #        
-    #    return QtGui.QWidget.eventFilter(self, widget, event)
-
-    #def tableViewClicked(self):
-    #    print 12
 
     def populateFromDict(self):
         
         nodeName = '|root'
-        
         
         mainDict = walkNode(nodeName)
         meshInfoDict = mainDict.get('infoDict')
@@ -109,10 +85,8 @@ class BaseWin(QtGui.QWidget):
         for dagPath, infoDict in meshInfoDict.iteritems():
             
             uniqueName = infoDict.get('uniqueName')
-            shortName = uniqueName.split('|')[-1]
             numTris = infoDict.get('numTris')
-            
-            self.populateTreeview(shortName, numTris, maxTris, self.model)
+            self.populateTreeview(dagPath, uniqueName, numTris, maxTris, self.model)
             
         
     def createIcon(self, vertValue):
@@ -138,9 +112,13 @@ class BaseWin(QtGui.QWidget):
         painter.end()
         return QtGui.QIcon(pixmap)
 
-    def populateTreeview(self, name, numTris, maxTris, model):
+    def populateTreeview(self, dagPath, uniqueName, numTris, maxTris, model):
 
+        name = uniqueName.split('|')[-1]
         iconItem = QtGui.QStandardItem(name)
+        iconItem.setToolTip(uniqueName)
+
+        iconItem.setData(dagPath, QtCore.Qt.UserRole+1)
         iconItem.setSizeHint(QtCore.QSize(100, self.iconHeight))
         iconItem.setIcon(self.createIcon(numTris/float(maxTris)))
         iconItem.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -212,7 +190,7 @@ def walkSelected():
     startObject = om.MDagPath()
     selList.getDagPath(0, startObject)
     infoDict = walkDag(startObject)
-    pprint.pprint(infoDict)
+    #pprint.pprint(infoDict)
 
 
 def walkNode(nodeName):
@@ -222,7 +200,7 @@ def walkNode(nodeName):
     selList.add(nodeName)
     selList.getDagPath(0, startObject)
     infoDict = walkDag(startObject)
-    pprint.pprint(infoDict)
+    #pprint.pprint(infoDict)
     return infoDict
 
 
