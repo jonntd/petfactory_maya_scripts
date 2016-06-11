@@ -4,7 +4,38 @@ import sys
 from PySide import QtGui, QtCore
 import maya.OpenMayaUI as omui
 from shiboken import wrapInstance
+from functools import partial
+import pymel.core as pm
 
+
+class TableView(QtGui.QTableView):
+    
+    def __init__(self, *args, **kwargs):
+        super(TableView, self).__init__(*args, **kwargs)
+
+    def contextMenuEvent(self, event):
+
+        row = self.rowAt(event.pos().y())
+
+        if row < 0:
+            return
+
+        name = self.model().item(row).text()
+
+        self.menu = QtGui.QMenu(self)
+        renameAction = QtGui.QAction('Select Node', self)
+        renameAction.triggered.connect(partial(self.selectNode, name))
+        self.menu.addAction(renameAction)
+        # add other required actions
+        self.menu.popup(QtGui.QCursor.pos())
+
+        
+
+    def selectNode(self, name):
+        pm.select(name)
+        #print self.model
+
+        
 class BaseWin(QtGui.QWidget):
     
     def __init__(self, parent=None):
@@ -19,7 +50,8 @@ class BaseWin(QtGui.QWidget):
         self.iconHeight = 18
         self.iconStrokeWidth = 1
         self.iconEdgeOffset = 4
-        self.iconBgColor = QtGui.QColor(220, 220, 220, 0)
+        self.iconBgColor = QtGui.QColor(0, 0, 0, 0)
+        self.barFrameColor = QtGui.QColor(100, 100, 100, 255)
         self.iconActiveColor = QtGui.QColor(240, 170, 50, 255)
 
         # layout
@@ -31,7 +63,8 @@ class BaseWin(QtGui.QWidget):
         self.proxyModel = QtGui.QSortFilterProxyModel()
         self.proxyModel.setSourceModel(self.model)
 
-        self.tableView = QtGui.QTableView()
+        #self.tableView = QtGui.QTableView()
+        self.tableView = TableView()
         self.tableView.setModel(self.proxyModel)
         self.tableView.setSortingEnabled(True)
 
@@ -48,6 +81,21 @@ class BaseWin(QtGui.QWidget):
         self.populateFromDict()
 
         self.tableView.setColumnWidth(0, 175)
+
+        #self.tableView.clicked.connect(self.tableViewClicked)
+
+        #self.tableView.installEventFilter(self)
+
+
+    #def eventFilter(self, widget, event):
+    #
+    #    if event.type() == QtCore.QEvent.KeyPress:
+    #        print 12
+    #        
+    #    return QtGui.QWidget.eventFilter(self, widget, event)
+
+    #def tableViewClicked(self):
+    #    print 12
 
     def populateFromDict(self):
         
@@ -82,7 +130,7 @@ class BaseWin(QtGui.QWidget):
 
         painter.setBrush(QtCore.Qt.NoBrush)
         pen = QtGui.QPen()
-        pen.setBrush(self.iconActiveColor)
+        pen.setBrush(self.barFrameColor)
         pen.setWidth(self.iconStrokeWidth )
         painter.setPen(pen)
         painter.drawRect(iconRect)
@@ -95,11 +143,13 @@ class BaseWin(QtGui.QWidget):
         iconItem = QtGui.QStandardItem(name)
         iconItem.setSizeHint(QtCore.QSize(100, self.iconHeight))
         iconItem.setIcon(self.createIcon(numTris/float(maxTris)))
+        iconItem.setFlags(QtCore.Qt.ItemIsEnabled)
         
         numRows = model.rowCount()
         model.setItem(numRows, 0, iconItem)
         
         triNumItem = QtGui.QStandardItem()
+        triNumItem.setFlags(QtCore.Qt.ItemIsEnabled)
         triNumItem.setData(numTris, QtCore.Qt.DisplayRole)
         model.setItem(numRows, 1, triNumItem)
         
