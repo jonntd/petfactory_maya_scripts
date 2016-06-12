@@ -72,11 +72,30 @@ class BaseWin(QtGui.QWidget):
         header.setStretchLastSection(True)
 
         self.tableView.setModel(self.model)
+        self.tableView.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.tableView.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+
         self.tableView.setIconSize(QtCore.QSize(self.iconWidth, self.iconHeight))
         vbox.addWidget(self.tableView)
         
         self.populateFromDict()
         self.tableView.setColumnWidth(0, 175)
+
+        setVisibilityButton = QtGui.QPushButton('Set Visibility')
+        vbox.addWidget(setVisibilityButton)
+        setVisibilityButton.clicked.connect(self.setVisibilityButtonClicked)
+
+        self.visCheckBox = QtGui.QCheckBox('Visibility')
+        vbox.addWidget(self.visCheckBox)
+
+    def setVisibilityButtonClicked(self):
+        
+        nameList = []
+        selectedIndexes = self.tableView.selectionModel().selectedRows()
+        for index in selectedIndexes:
+            nameList.append(self.model.item(index.row()).data(QtCore.Qt.UserRole+1))
+
+        setVisibility(nameList, self.visCheckBox.isChecked())
 
     def populateFromDict(self):
         
@@ -137,13 +156,13 @@ class BaseWin(QtGui.QWidget):
         iconItem.setData(dagPath, QtCore.Qt.UserRole+1)
         iconItem.setSizeHint(QtCore.QSize(100, self.iconHeight))
         iconItem.setIcon(self.createIcon(numTris/float(maxTris)))
-        iconItem.setFlags(QtCore.Qt.ItemIsEnabled)
+        iconItem.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         
         numRows = model.rowCount()
         model.setItem(numRows, 0, iconItem)
         
         triNumItem = QtGui.QStandardItem()
-        triNumItem.setFlags(QtCore.Qt.ItemIsEnabled)
+        triNumItem.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         triNumItem.setData(numTris, QtCore.Qt.DisplayRole)
         model.setItem(numRows, 1, triNumItem)
         
@@ -193,6 +212,31 @@ def walkDag(startObject):
     return mainDict
     
     
+def setVisibility(nameList, visible=True):
+    
+    selList = om.MSelectionList()
+    
+    for name in nameList:
+        selList.add(name)
+        
+    selIter = om.MItSelectionList(selList)
+       
+    mObj = om.MObject()
+    while not selIter.isDone():
+        selIter.getDependNode(mObj)
+        depFn = om.MFnDependencyNode(mObj)
+        try:
+            plug = depFn.findPlug('visibility')
+            plug.setBool(visible)
+            #plugAttr = plug.attribute()      
+            #if om.MFnNumericAttribute(plugAttr).unitType() == om.MFnNumericData.kBoolean:
+            #    plug.setBool(visible)
+            
+        except:
+            om.MGlobal.displayError('Could not set the attribute.')
+
+        selIter.next()
+        
 
 def walkSelected():
     
